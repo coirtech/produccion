@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_saleorder_document_fixed_discount_per_unit"
+              inherit_id="sale.report_saleorder_document">
+        <!-- La columna porcentual se muestra solamente si hay descuentos
+             porcentuales independientes del descuento fijo por unidad. -->
+        <xpath expr="//t[@t-set='display_discount']" position="attributes">
+            <attribute name="t-value">any(l.discount &gt; 0 and not l.fixed_discount_per_unit for l in lines_to_report)</attribute>
+        </xpath>
+        <xpath expr="//t[@t-set='display_discount']" position="after">
+            <t t-set="display_fixed_discount" t-value="any(l.fixed_discount_per_unit &gt; 0 for l in lines_to_report)"/>
+        </xpath>
+
+        <!-- No modificar colspan_count dentro de un TH ni buscar
+             //thead/t[@t-set='colspan_count']: ese XPath no coincide
+             con algunas vistas heredadas de Odoo 19. -->
+        <xpath expr="//th[@name='th_priceunit']" position="after">
+            <th t-if="display_fixed_discount"
+                name="th_fixed_discount_per_unit"
+                class="text-end text-nowrap">Desc./pieza</th>
+        </xpath>
+        <xpath expr="//td[@name='td_product_priceunit']" position="after">
+            <td t-if="display_fixed_discount"
+                name="td_fixed_discount_per_unit"
+                class="text-end text-nowrap">
+                <span t-if="not collapse_prices and line.fixed_discount_per_unit"
+                      t-field="line.fixed_discount_per_unit"
+                      t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+            </td>
+        </xpath>
+        <!-- Las secciones se ajustan directamente, sin modificar el
+             contador interno del encabezado. -->
+        <xpath expr="//td[@name='td_section_name']" position="attributes">
+            <attribute name="t-att-colspan">section_name_colspan + (1 if display_fixed_discount and show_section_total else 0)</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_combo_name']" position="attributes">
+            <attribute name="t-att-colspan">colspan_count + (1 if display_fixed_discount else 0)</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_section_group_priceunit']" position="after">
+            <td t-if="display_fixed_discount" name="td_section_group_fixed_discount_per_unit" class="text-end"/>
+        </xpath>
+        <xpath expr="//span[@t-field='line.discount']" position="attributes">
+            <attribute name="t-if">line.discount &gt; 0 and not line.fixed_discount_per_unit</attribute>
+        </xpath>
+    </template>
+</odoo>

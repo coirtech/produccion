@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_fixed_discount_per_unit" model="ir.ui.view">
+        <field name="name">sale.order.form.fixed.discount.per.unit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/list/field[@name='price_unit']" position="after">
+                <field name="fixed_discount_per_unit"
+                       string="Desc. $/pza"
+                       optional="show"
+                       readonly="qty_invoiced &gt; 0 or display_type or is_downpayment or not product_id"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/form//field[@name='price_unit']" position="after">
+                <field name="fixed_discount_per_unit"
+                       readonly="qty_invoiced &gt; 0 or display_type or is_downpayment or not product_id"/>
+            </xpath>
+            <!-- El porcentaje sigue existiendo internamente por compatibilidad,
+                 pero se oculta por defecto en la tabla editable. -->
+            <xpath expr="//field[@name='order_line']/list/field[@name='discount']" position="attributes">
+                <attribute name="optional">hide</attribute>
+                <attribute name="readonly">fixed_discount_per_unit != 0 or qty_invoiced &gt; 0</attribute>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/form//field[@name='discount']" position="attributes">
+                <attribute name="readonly">fixed_discount_per_unit != 0 or qty_invoiced &gt; 0</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

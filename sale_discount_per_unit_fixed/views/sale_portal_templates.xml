@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_sale_order_fixed_discount_per_unit"
+              inherit_id="sale.sale_order_portal_content">
+        <xpath expr="//t[@t-set='display_discount']" position="attributes">
+            <attribute name="t-value">any(line.discount &gt; 0 and not line.fixed_discount_per_unit for line in lines_to_report)</attribute>
+        </xpath>
+        <xpath expr="//t[@t-set='display_discount']" position="after">
+            <t t-set="display_fixed_discount" t-value="any(line.fixed_discount_per_unit &gt; 0 for line in lines_to_report)"/>
+        </xpath>
+        <xpath expr="//th[@id='product_unit_price_header']" position="after">
+            <th t-if="display_fixed_discount"
+                id="fixed_discount_unit_header"
+                t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
+                Desc./pieza
+            </th>
+        </xpath>
+        <xpath expr="//td[@name='td_product_priceunit']" position="after">
+            <td t-if="display_fixed_discount"
+                name="td_fixed_discount_per_unit"
+                t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
+                <span t-if="not collapse_prices and line.fixed_discount_per_unit"
+                      t-field="line.fixed_discount_per_unit"
+                      t-options="{'widget': 'monetary', 'display_currency': sale_order.currency_id}"/>
+            </td>
+        </xpath>
+        <xpath expr="//td[@name='td_combo_priceunit']" position="after">
+            <td t-if="display_fixed_discount"
+                name="td_combo_fixed_discount_per_unit"
+                t-attf-class="text-end {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}"/>
+        </xpath>
+        <xpath expr="//td[@name='td_section_group_priceunit']" position="after">
+            <td t-if="display_fixed_discount" name="td_section_group_fixed_discount_per_unit"
+                class="d-none d-sm-table-cell"/>
+        </xpath>
+        <xpath expr="//t[@t-set='section_name_colspan']" position="attributes">
+            <attribute name="t-value">3 + (1 if display_discount else 0) + (1 if display_taxes else 0) + (1 if display_fixed_discount else 0)</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_section_name_xs']" position="attributes">
+            <attribute name="t-att-colspan">section_name_colspan - 1 - (1 if display_discount else 0) - (1 if display_taxes else 0) - (1 if display_fixed_discount else 0)</attribute>
+        </xpath>
+        <xpath expr="//strong[@t-if='line.discount &gt; 0']" position="attributes">
+            <attribute name="t-if">line.discount &gt; 0 and not line.fixed_discount_per_unit</attribute>
+        </xpath>
+    </template>
+</odoo>
