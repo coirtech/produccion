@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add text outside the totals table. Do not alter table columns or taxes. -->
+    <template id="report_saleorder_amount_in_words"
+              name="COIRTECH - Importe con letra en cotizacion y orden"
+              inherit_id="sale.report_saleorder_document"
+              priority="35">
+        <xpath expr="//div[@name='so_total_summary']" position="after">
+            <div t-if="doc.currency_id.name in ('MXN', 'USD')"
+                 class="mt-2 mb-3" name="coir_amount_total_in_words_block"
+                 style="page-break-inside: avoid; font-size: 14px;">
+                <strong>Importe con letra: </strong>
+                <span t-field="doc.coir_amount_total_in_words"/>
+            </div>
+        </xpath>
+    </template>
+</odoo>
