@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Adds explicit unit filters to the existing Odoo 19 report, without rewriting its SQL view. -->
+    <record id="odometer_reporting_search_units" model="ir.ui.view">
+        <field name="name">coirtech.fleet.odometer.report.search.units</field>
+        <field name="model">fleet.vehicle.odometer.report</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_odometer_report_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="coirtech_odometer_hours" string="Horas" domain="[('vehicle_id.odometer_unit', '=', 'hours')]"/>
+                <filter name="coirtech_odometer_km" string="Kilómetros" domain="[('vehicle_id.odometer_unit', '=', 'kilometers')]"/>
+                <filter name="coirtech_odometer_miles" string="Millas" domain="[('vehicle_id.odometer_unit', '=', 'miles')]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Separate action to avoid mixing hour readings with kilometer readings on a chart. -->
+    <record id="odometer_hours_analysis_action" model="ir.actions.act_window">
+        <field name="name">Horas de uso</field>
+        <field name="res_model">fleet.vehicle.odometer.report</field>
+        <field name="view_mode">graph</field>
+        <field name="view_id" ref="fleet.fleet_vehicle_odometer_report_view_graph"/>
+        <field name="domain">[('vehicle_id.odometer_unit', '=', 'hours'), ('vehicle_id.active', '=', True)]</field>
+        <field name="context">{'search_default_groupby_date': 1, 'search_default_groupby_vehicle': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">No hay lecturas en Horas.</p>
+            <p>Configura un vehículo con unidad Horas y registra lecturas del odómetro.</p>
+        </field>
+    </record>
+    <menuitem id="odometer_hours_analysis_menu"
+              name="Horas de uso"
+              parent="fleet.menu_fleet_reporting"
+              action="odometer_hours_analysis_action"
+              sequence="4"
+              groups="fleet.fleet_group_manager"/>
+
+    <!-- A row-based report: each reading displays its unit; no mixed-unit totals. -->
+    <record id="odometer_readings_with_units_action" model="ir.actions.act_window">
+        <field name="name">Lecturas con unidad</field>
+        <field name="res_model">fleet.vehicle.odometer</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="fleet.fleet_vehicle_odometer_view_tree"/>
+    </record>
+    <menuitem id="odometer_readings_with_units_menu"
+              name="Lecturas con unidad"
+              parent="fleet.menu_fleet_reporting"
+              action="odometer_readings_with_units_action"
+              sequence="5"
+              groups="fleet.fleet_group_manager"/>
+</odoo>

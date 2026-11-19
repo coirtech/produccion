@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Standalone QWeb report: no modifications to Odoo's base sale or fleet reports. -->
+    <template id="report_odometer_units_document">
+        <t t-call="web.html_container">
+            <t t-set="o" t-value="docs[0] if docs else False"/>
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <h2>Lecturas del odómetro por unidad</h2>
+                    <p>COIRTECH - Registro de lecturas. Las unidades se muestran por separado y no se suman entre sí.</p>
+                    <table class="table table-sm o_main_table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Vehículo</th>
+                                <th class="text-end">Lectura</th>
+                                <th>Unidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="docs" t-as="lectura">
+                                <td><span t-field="lectura.date"/></td>
+                                <td><span t-field="lectura.vehicle_id"/></td>
+                                <td class="text-end"><span t-field="lectura.value"/></td>
+                                <td><span t-field="lectura.unit"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_odometer_units" model="ir.actions.report">
+        <field name="name">Lecturas de odómetro (con unidad)</field>
+        <field name="model">fleet.vehicle.odometer</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">coirtech_fleet_odometer_hours.report_odometer_units_document</field>
+        <field name="report_file">coirtech_fleet_odometer_hours.report_odometer_units_document</field>
+        <field name="binding_model_id" ref="fleet.model_fleet_vehicle_odometer"/>
+        <field name="binding_type">report</field>
+        <field name="binding_view_types">list,form</field>
+        <field name="print_report_name">'Lecturas_Odometro_Unidades'</field>
+    </record>
+</odoo>
