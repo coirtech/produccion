@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Odoo 19 purchase report: insert AFTER the existing tax total block.
+         We intentionally do not change the monetary values, taxes or table columns. -->
+    <template id="report_purchaseorder_amount_in_words"
+              name="COIRTECH - Importe con letra en orden de compra"
+              inherit_id="purchase.report_purchaseorder_document"
+              priority="35">
+        <xpath expr="//div[@id='total']" position="after">
+            <div t-if="o.currency_id.name in ('MXN', 'USD')"
+                 name="coir_purchase_amount_total_in_words_block"
+                 class="mt-2 mb-3"
+                 style="page-break-inside: avoid; font-size: 14px;">
+                <strong>Importe con letra: </strong>
+                <span t-field="o.coir_purchase_amount_total_in_words"/>
+            </div>
+        </xpath>
+    </template>
+</odoo>
