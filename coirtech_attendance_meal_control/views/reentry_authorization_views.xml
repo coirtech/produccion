@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="reentry_authorization_list" model="ir.ui.view">
+        <field name="name">coir.reentry.authorization.list</field>
+        <field name="model">coir.reentry.authorization</field>
+        <field name="arch" type="xml">
+            <list string="Autorizaciones de nueva entrada" delete="0" default_order="id desc">
+                <field name="employee_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="valid_date"/>
+                <field name="reason"/>
+                <field name="authorized_by"/>
+                <field name="authorized_at"/>
+                <field name="state" widget="badge"/>
+                <field name="consumed_attendance_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="reentry_authorization_form" model="ir.ui.view">
+        <field name="name">coir.reentry.authorization.form</field>
+        <field name="model">coir.reentry.authorization</field>
+        <field name="arch" type="xml">
+            <form string="Autorizar una entrada adicional" delete="0" duplicate="0">
+                <header>
+                    <button name="action_revoke" type="object" string="Revocar autorización" invisible="state != 'pending' or not id"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,used,revoked"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="employee_id" readonly="id"/>
+                        <field name="company_id" readonly="1" required="0" groups="base.group_multi_company"/>
+                        <field name="valid_date" readonly="id"/>
+                        <field name="reason" readonly="id" placeholder="Motivo de la jornada extraordinaria o de la nueva entrada."/>
+                    </group>
+                    <p>Esta autorización permite una sola entrada adicional en la fecha local indicada. El empleado debe identificarse de nuevo en el quiosco y pulsar Entrada.</p>
+                    <group string="Registro de autorización" invisible="not id">
+                        <field name="authorized_by" readonly="1" required="0"/>
+                        <field name="authorized_at" readonly="1" required="0"/>
+                        <field name="consumed_attendance_id" readonly="1"/>
+                        <field name="revoked_by" readonly="1" invisible="state != 'revoked'"/>
+                        <field name="revoked_at" readonly="1" invisible="state != 'revoked'"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="reentry_authorization_action" model="ir.actions.act_window">
+        <field name="name">Autorizar nueva entrada</field>
+        <field name="res_model">coir.reentry.authorization</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="reentry_authorization_menu" name="Autorizar nueva entrada" sequence="14"
+              parent="hr_attendance.menu_hr_attendance_root" action="reentry_authorization_action"
+              groups="hr_attendance.group_hr_attendance_manager"/>
+</odoo>

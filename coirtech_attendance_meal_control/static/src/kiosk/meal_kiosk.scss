@@ -1,0 +1,214 @@
+.coir_meal_panel,
+.coir_meal_result {
+    --coir-ink: #173248;
+    --coir-green: #17664a;
+    --coir-border: #d6e0e5;
+    width: 100%;
+    max-width: 880px;
+    color: var(--coir-ink);
+    background: #fff;
+    border: 1px solid var(--coir-border);
+    border-radius: 22px;
+    box-shadow: 0 10px 32px rgba(23, 50, 72, 0.10);
+    padding: clamp(20px, 3vw, 36px);
+}
+
+.coir_meal_brand {
+    color: #17664a;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    margin-bottom: 8px;
+}
+
+.coir_meal_header h1,
+.coir_meal_result h1 {
+    font-size: clamp(26px, 3.5vw, 36px);
+    font-weight: 700;
+    margin-bottom: 14px;
+}
+
+.coir_meal_employee {
+    font-size: clamp(20px, 2.6vw, 27px);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.coir_meal_section,
+.coir_meal_instruction,
+.coir_meal_footer {
+    color: #526371;
+}
+
+.coir_meal_status {
+    display: inline-block;
+    padding: 5px 15px;
+    background: #edf6f0;
+    color: #235a43;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.coir_meal_actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 26px 0;
+}
+
+.coir_meal_button {
+    min-height: 140px;
+    border-radius: 16px;
+    border: 2px solid #17664a;
+    background: #f1f8f4;
+    color: #155c43;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 12px;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease, background 0.15s ease;
+    touch-action: manipulation;
+
+    &:not(:disabled):hover,
+    &:not(:disabled):focus-visible {
+        background: #e4f2e9;
+        box-shadow: 0 0 0 3px rgba(23, 102, 74, 0.16);
+        outline: none;
+    }
+
+    &:disabled {
+        cursor: default;
+        color: #6a7780;
+        border-color: #e0e5e9;
+        background: #f5f6f7;
+        opacity: 0.62;
+    }
+}
+
+.coir_meal_button_check_out {
+    border-color: #28485f;
+    background: #eef3f7;
+    color: #173248;
+
+    &:not(:disabled):hover,
+    &:not(:disabled):focus-visible {
+        background: #e3edf5;
+        box-shadow: 0 0 0 3px rgba(40, 72, 95, 0.16);
+    }
+}
+
+.coir_meal_action_icon {
+    font-size: 30px;
+    margin-bottom: 11px;
+}
+
+.coir_meal_action_label {
+    font-size: clamp(19px, 2.4vw, 25px);
+    font-weight: 700;
+    text-align: center;
+}
+
+.coir_meal_action_detail {
+    font-size: 14px;
+    margin-top: 5px;
+    text-align: center;
+}
+
+.coir_meal_cancel {
+    color: #28485f;
+    border: 1px solid #b8c9d4;
+    background: #fff;
+    min-height: 46px;
+    padding: 10px 22px;
+
+    &:hover {
+        background: #edf3f7;
+        color: #173248;
+    }
+}
+
+.coir_meal_confirm {
+    color: #fff;
+    background: #17664a;
+    border-color: #17664a;
+    min-height: 46px;
+    padding: 10px 22px;
+
+    &:hover {
+        color: #fff;
+        background: #12533c;
+    }
+}
+
+.coir_meal_confirmation {
+    padding: 28px 12px;
+    margin: 22px 0;
+    border: 1px solid #d6e0e5;
+    background: #f5f8fa;
+    border-radius: 16px;
+    text-align: center;
+
+    h2 {
+        font-size: 24px;
+    }
+
+    p {
+        max-width: 540px;
+        margin: 16px auto 24px;
+        font-size: 18px;
+    }
+}
+
+.coir_meal_result {
+    max-width: 720px;
+    padding: 42px 24px;
+
+    p {
+        font-size: 20px;
+    }
+}
+
+.coir_meal_success_icon,
+.coir_meal_error_icon {
+    display: block;
+    font-size: 68px;
+    margin: 25px 0;
+    color: #17664a;
+}
+
+.coir_meal_error_icon {
+    color: #496f8a;
+}
+
+.coir_meal_result_time {
+    color: #526371;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+    .coir_meal_actions {
+        gap: 10px;
+    }
+
+    .coir_meal_button {
+        min-height: 144px;
+        padding: 16px 8px;
+    }
+
+    .coir_meal_action_detail {
+        font-size: 12px;
+    }
+}
+
+@media (min-width: 760px) {
+    .coir_meal_actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .coir_meal_action_label {
+        font-size: 22px;
+    }
+}

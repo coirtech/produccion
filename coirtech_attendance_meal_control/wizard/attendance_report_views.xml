@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="attendance_report_wizard_form" model="ir.ui.view">
+        <field name="name">coir.attendance.report.wizard.form</field>
+        <field name="model">coir.attendance.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="COIRTECH — Reporte de asistencias">
+                <group>
+                    <group>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                        <field name="company_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                    </group>
+                    <group>
+                        <field name="employee_ids" widget="many2many_tags" domain="[('company_id', 'in', company_ids)]" options="{'no_create': True}"/>
+                        <field name="department_ids" widget="many2many_tags" domain="[('company_id', 'in', company_ids)]" options="{'no_create': True}"/>
+                    </group>
+                </group>
+                <group invisible="not attendance_ids">
+                    <field name="attendance_ids" widget="many2many_tags" readonly="1" options="{'no_open': True}"/>
+                    <div class="text-muted">El periodo y los filtros se aplicarán a estas jornadas seleccionadas.</div>
+                </group>
+                <p class="text-muted">Las fechas corresponden al inicio de la jornada en su zona horaria efectiva. La comida y las salidas de trabajo están incluidas en las horas pagadas. Excel contiene Resumen y Detalle de movimientos.</p>
+                <footer>
+                    <button name="action_export_xlsx" type="object" string="Descargar Excel" class="btn-primary"/>
+                    <button name="action_print_pdf" type="object" string="Imprimir PDF" class="btn-secondary"/>
+                    <button string="Cerrar" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="attendance_report_wizard_action" model="ir.actions.act_window">
+        <field name="name">COIRTECH — Reporte Excel y PDF</field>
+        <field name="res_model">coir.attendance.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="group_ids" eval="[(4, ref('hr_attendance.group_hr_attendance_officer'))]"/>
+    </record>
+</odoo>

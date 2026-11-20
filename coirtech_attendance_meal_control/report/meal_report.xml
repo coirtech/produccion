@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_meal" model="report.paperformat">
+        <field name="name">COIRTECH Asistencias — A4 horizontal</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">35</field>
+        <field name="margin_bottom">18</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_spacing">20</field>
+        <field name="dpi">90</field>
+    </record>
+    <template id="report_meal_journeys">
+        <t t-call="web.html_container">
+            <t t-foreach="batches" t-as="batch">
+                <t t-set="company" t-value="batch['company']"/>
+                <t t-set="o" t-value="batch['records'][0]"/>
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2 style="color: #18384b;">COIRTECH — Asistencias y movimientos</h2>
+                        <p style="font-size: 12px; color: #525b63;">
+                            Comida y salidas de trabajo pagadas · Movimientos manuales · Resumen por empleado y fecha laboral
+                        </p>
+                        <table class="table table-sm o_main_table table-bordered" style="font-size: 12px; width: 100%;">
+                            <thead style="display: table-header-group; background-color: #edf3f5;">
+                                <tr>
+                                    <th>Fecha laboral</th><th>Empleado</th>
+                                    <th>Cerradas / abiertas</th><th>Horas cerradas<br/>(hh:mm)</th>
+                                    <th>Comida confirmada<br/>(hh:mm)</th><th>Salidas confirmadas<br/>(hh:mm)</th>
+                                    <th>Pendientes<br/>comida / salida</th><th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="batch['summary']" t-as="row" style="page-break-inside: avoid;">
+                                    <td><span t-out="format_day(row['date'])"/></td>
+                                    <td><span t-out="row['employee_name']"/></td>
+                                    <td><span t-out="row['closed']"/> / <span t-out="row['open']"/></td>
+                                    <td><span t-out="format_seconds(row['paid_seconds'])"/></td>
+                                    <td><span t-out="format_seconds(row['meal_seconds'])"/></td>
+                                    <td><span t-out="format_seconds(row['work_seconds'])"/></td>
+                                    <td><span t-out="row['meal_pending']"/> / <span t-out="row['work_pending']"/></td>
+                                    <td><span t-out="row['status']"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p style="font-size: 11px; color: #525b63;">
+                            Comida y salidas de trabajo ya incluidas: no se suman nuevamente a las horas de jornada.
+                            Si hay jornadas abiertas, las horas cerradas son un subtotal parcial. Un intervalo sin regreso no tiene duración confirmada.
+                        </p>
+                        <h3 style="color: #18384b; margin-top: 24px;">Detalle de jornadas</h3>
+                        <div t-foreach="batch['journeys']" t-as="journey" style="margin-bottom: 18px; page-break-inside: avoid; break-inside: avoid;">
+                            <h4 style="font-size: 14px; color: #17513c; margin-top: 14px; page-break-after: avoid;">
+                                <span t-out="journey['employee_name']"/> · <span t-out="format_day(journey['date'])"/>
+                                · Jornada <span t-out="journey['id']"/>
+                            </h4>
+                            <p style="font-size: 11px; margin-bottom: 5px; page-break-after: avoid;">
+                                <span t-out="journey['department']"/> · Zona: <span t-out="journey['timezone']"/>
+                                · <strong t-out="journey['status']"/>
+                            </p>
+                            <table class="table table-sm table-bordered" style="font-size: 12px; width: 100%;">
+                                <thead style="display: table-header-group; background-color: #edf3f5;">
+                                    <tr>
+                                        <th>Movimiento</th><th>Fecha y hora local</th><th>Referencia</th>
+                                        <th>Comida / salida<br/>(hh:mm)</th><th>Jornada al cierre<br/>(hh:mm)</th><th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="journey['events']" t-as="event" style="page-break-inside: avoid;">
+                                        <td><span t-out="event['label']"/></td>
+                                        <td><span t-out="format_stamp(event['stamp'], event['timezone'])"/></td>
+                                        <td><span t-out="event['reference']"/></td>
+                                        <td><span t-out="format_seconds(event['interval_seconds'])"/></td>
+                                        <td><span t-out="format_seconds(event['journey_seconds'])"/></td>
+                                        <td><span t-out="event['interval_state']"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p t-if="journey['review_note']" style="font-size: 11px;">
+                                <strong>Última revisión de RH:</strong> <span t-out="journey['review_note']"/>
+                            </p>
+                        </div>
+                        <p style="font-size: 11px; color: #525b63;">
+                            Las referencias C y S enlazan salida y regreso; J identifica la jornada. Los movimientos pendientes conservan el regreso vacío.
+                            Las horas se muestran en la zona horaria efectiva del empleado en Odoo; las duraciones usan instantes UTC.
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+    <record id="action_report_meal" model="ir.actions.report">
+        <field name="name">COIRTECH — Asistencias y movimientos</field>
+        <field name="model">hr.attendance</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">coirtech_attendance_meal_control.report_meal_journeys</field>
+        <field name="report_file">coirtech_attendance_meal_control.report_meal_journeys</field>
+        <field name="binding_model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_type">report</field>
+        <field name="binding_view_types">list,form</field>
+        <field name="paperformat_id" ref="paperformat_meal"/>
+        <field name="group_ids" eval="[(4, ref('hr_attendance.group_hr_attendance_officer'))]"/>
+        <field name="print_report_name">'COIRTECH_Asistencias_y_movimientos'</field>
+    </record>
+</odoo>

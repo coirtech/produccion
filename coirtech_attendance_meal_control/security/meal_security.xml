@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="meal_section_company_rule" model="ir.rule">
+        <field name="name">COIRTECH: secciones de las empresas autorizadas</field>
+        <field name="model_id" ref="model_coir_meal_section"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="work_outing_company_rule" model="ir.rule">
+        <field name="name">COIRTECH: salidas de las empresas autorizadas</field>
+        <field name="model_id" ref="model_coir_work_outing"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="work_outing_own_rule" model="ir.rule">
+        <field name="name">COIRTECH: consultar salidas propias</field>
+        <field name="model_id" ref="model_coir_work_outing"/>
+        <field name="groups" eval="[(4, ref('hr_attendance.group_hr_attendance_own_reader'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="work_outing_officer_rule" model="ir.rule">
+        <field name="name">COIRTECH: salidas de empleados asignados</field>
+        <field name="model_id" ref="model_coir_work_outing"/>
+        <field name="groups" eval="[(4, ref('hr_attendance.group_hr_attendance_officer'))]"/>
+        <field name="domain_force">[('employee_id.attendance_manager_id', '=', user.id)]</field>
+    </record>
+    <record id="work_outing_all_rule" model="ir.rule">
+        <field name="name">COIRTECH: todas las salidas autorizadas</field>
+        <field name="model_id" ref="model_coir_work_outing"/>
+        <field name="groups" eval="[(4, ref('hr_attendance.group_hr_attendance_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+    <record id="reentry_company_rule" model="ir.rule">
+        <field name="name">COIRTECH: autorizaciones de las empresas permitidas</field>
+        <field name="model_id" ref="model_coir_reentry_authorization"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

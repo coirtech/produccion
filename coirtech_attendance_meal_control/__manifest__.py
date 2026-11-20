@@ -1,0 +1,31 @@
+{
+    'name': 'COIRTECH - Asistencias, comidas y salidas',
+    'summary': 'Seis movimientos pagados, bloqueo de reentrada y reportes Excel/PDF.',
+    'description': 'Control COIRTECH de asistencia en quiosco. Seis movimientos manuales, comida y salidas temporales pagadas, autorización de entrada adicional por Recursos Humanos y reportes Excel y PDF por empresa. Actualiza el módulo original conservando sus registros.',
+    'version': '19.0.2.0.0',
+    'category': 'Human Resources/Attendances',
+    'author': 'COIRTECH',
+    'license': 'LGPL-3',
+    'depends': ['hr_attendance'],
+    'external_dependencies': {'python': ['xlsxwriter']},
+    'data': [
+        'security/meal_security.xml',
+        'security/ir.model.access.csv',
+        'views/meal_configuration_views.xml',
+        'wizard/meal_correction_views.xml',
+        'wizard/work_correction_views.xml',
+        'views/reentry_authorization_views.xml',
+        'wizard/attendance_report_views.xml',
+        'views/attendance_meal_views.xml',
+        'report/meal_report.xml',
+    ],
+    'assets': {
+        'hr_attendance.assets_public_attendance': [
+            'coirtech_attendance_meal_control/static/src/kiosk/meal_kiosk.js',
+            'coirtech_attendance_meal_control/static/src/kiosk/meal_kiosk.xml',
+            'coirtech_attendance_meal_control/static/src/kiosk/meal_kiosk.scss',
+        ],
+    },
+    'application': False,
+    'installable': True,
+}

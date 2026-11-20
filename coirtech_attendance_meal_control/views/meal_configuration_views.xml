@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="settings_meal_control" model="ir.ui.view">
+        <field name="name">res.config.settings.coir.meal.control</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="hr_attendance.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='hr_attendance']" position="inside">
+                <block title="COIRTECH — Asistencias, comidas y salidas" name="coir_meal_settings">
+                    <setting string="Seis movimientos en el quiosco" company_dependent="1"
+                             help="Entrada, comida, regreso de comida, salida de trabajo, regreso al trabajo y salida final. Comida y salidas temporales pagadas.">
+                        <field name="coir_meal_control_enabled"/>
+                        <div class="text-muted mt-2">
+                            Registro manual, sin horarios de comida ni alertas por duración.
+                            Para usarlo, desactiva Salida automática en esta empresa y recarga el quiosco.
+                            Después de Salida final, una nueva entrada queda bloqueada hasta el siguiente día local.
+                            Recursos Humanos puede autorizar una entrada adicional para una fecha concreta.
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="meal_section_list" model="ir.ui.view">
+        <field name="name">coir.meal.section.list</field>
+        <field name="model">coir.meal.section</field>
+        <field name="arch" type="xml">
+            <list string="Secciones de comidas" editable="bottom" delete="0">
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="active" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="meal_section_form" model="ir.ui.view">
+        <field name="name">coir.meal.section.form</field>
+        <field name="model">coir.meal.section</field>
+        <field name="arch" type="xml">
+            <form string="Sección de comidas" delete="0">
+                <sheet><group>
+                    <field name="name"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                    <field name="active"/>
+                </group></sheet>
+            </form>
+        </field>
+    </record>
+    <record id="meal_section_action" model="ir.actions.act_window">
+        <field name="name">Secciones de comidas</field>
+        <field name="res_model">coir.meal.section</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="meal_section_menu" name="Secciones de comidas"
+              parent="hr_attendance.menu_hr_attendance_configuration"
+              action="meal_section_action" sequence="25"
+              groups="hr_attendance.group_hr_attendance_manager"/>
+    <record id="employee_meal_section" model="ir.ui.view">
+        <field name="name">hr.employee.coir.meal.section</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='identification_group']" position="inside">
+                <field name="coir_meal_section_id" string="Sección COIRTECH"
+                       domain="[('company_id', '=', company_id)]"
+                       options="{'no_create': True}" groups="hr.group_hr_user"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

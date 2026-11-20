@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="attendance_form_meal" model="ir.ui.view">
+        <field name="name">hr.attendance.form.coir.meal</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='group_employee']" position="after">
+                <group string="COIRTECH — Comida pagada" name="coir_meal_group" invisible="not coir_managed">
+                    <field name="coir_managed" invisible="1"/>
+                    <field name="coir_company_id" readonly="1" groups="base.group_multi_company"/>
+                    <field name="coir_section_name" readonly="1"/>
+                    <field name="coir_meal_start" readonly="1"/>
+                    <field name="coir_meal_end" readonly="1"/>
+                    <field name="coir_meal_hours" widget="float_time" readonly="1" invisible="not coir_meal_end"/>
+                    <field name="coir_meal_status" readonly="1"/>
+                    <button name="action_coir_review_meal" type="object"
+                            string="Corregir comida" class="btn-secondary"
+                            groups="hr_attendance.group_hr_attendance_manager"/>
+                    <button name="action_coir_authorize_reentry" type="object"
+                            string="Autorizar nueva entrada" class="btn-secondary" invisible="not check_out"
+                            groups="hr_attendance.group_hr_attendance_manager"/>
+                </group>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <notebook invisible="not coir_managed">
+                    <page string="Salidas de trabajo pagadas" name="coir_work_outings">
+                        <group>
+                            <field name="coir_work_status" readonly="1"/>
+                            <field name="coir_work_hours" string="Tiempo de salidas confirmadas" widget="float_time" readonly="1"/>
+                        </group>
+                        <field name="coir_work_outing_ids" readonly="1">
+                            <list create="0" delete="0" default_order="start asc">
+                                <field name="start"/>
+                                <field name="end"/>
+                                <field name="duration_hours" widget="float_time" invisible="not end"/>
+                                <field name="state" widget="badge"/>
+                                <field name="review_note" optional="hide"/>
+                                <button name="action_correct" type="object" string="Corregir" icon="fa-pencil"
+                                        groups="hr_attendance.group_hr_attendance_manager"/>
+                            </list>
+                        </field>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
+    <record id="attendance_meal_list" model="ir.ui.view">
+        <field name="name">hr.attendance.coir.meal.list</field>
+        <field name="model">hr.attendance</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Control de comidas y salidas COIRTECH" create="0" delete="0" default_order="check_in desc">
+                <field name="date" string="Fecha de jornada"/>
+                <field name="employee_id" readonly="1"/>
+                <field name="coir_company_id" string="Empresa" groups="base.group_multi_company" optional="show"/>
+                <field name="coir_section_name" string="Sección" optional="hide"/>
+                <field name="check_in" string="Entrada"/>
+                <field name="coir_meal_start" string="Salida a comer"/>
+                <field name="coir_meal_end" string="Regreso de comida"/>
+                <field name="check_out" string="Salida final"/>
+                <field name="coir_meal_hours" string="Comida registrada" widget="float_time" invisible="not coir_meal_end"/>
+                <field name="coir_work_hours" string="Salidas confirmadas" widget="float_time" invisible="coir_work_status == 'none'"/>
+                <field name="worked_hours" string="Horas de jornada pagada" widget="float_time" invisible="not check_out"/>
+                <field name="coir_meal_status" widget="badge"/>
+                <field name="coir_work_status" widget="badge"/>
+                <field name="coir_managed" column_invisible="True"/>
+                <field name="department_id" optional="hide"/>
+                <field name="out_mode" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="attendance_meal_search" model="ir.ui.view">
+        <field name="name">hr.attendance.coir.meal.search</field>
+        <field name="model">hr.attendance</field>
+        <field name="arch" type="xml">
+            <search string="Buscar jornadas y comidas">
+                <field name="employee_id"/>
+                <field name="coir_company_id" string="Empresa" groups="base.group_multi_company"/>
+                <field name="coir_section_name" string="Sección"/>
+                <field name="department_id"/>
+                <filter name="meal_date" string="Fecha" date="date"/>
+                <separator/>
+                <filter name="meal_open" string="En comida" domain="[('coir_meal_status', '=', 'open')]"/>
+                <filter name="meal_returned" string="Regreso registrado" domain="[('coir_meal_status', '=', 'returned')]"/>
+                <filter name="meal_missing" string="Salida sin regreso" domain="[('coir_meal_status', '=', 'missing')]"/>
+                <filter name="meal_none" string="Sin comida registrada" domain="[('coir_meal_status', '=', 'none')]"/>
+                <filter name="work_open" string="Fuera por trabajo" domain="[('coir_work_status', '=', 'open')]"/>
+                <filter name="work_missing" string="Salida de trabajo sin regreso" domain="[('coir_work_status', '=', 'missing')]"/>
+                <separator/>
+                <filter name="shift_open" string="Jornada abierta" domain="[('check_out', '=', False)]"/>
+                <filter name="shift_closed" string="Jornada cerrada" domain="[('check_out', '!=', False)]"/>
+                <separator/>
+                <filter name="group_section" string="Sección" context="{'group_by':'coir_section_name'}"/>
+                <filter name="group_company" string="Empresa" context="{'group_by':'coir_company_id'}" groups="base.group_multi_company"/>
+                <filter name="group_department" string="Departamento" context="{'group_by':'department_id'}"/>
+                <filter name="group_employee" string="Empleado" context="{'group_by':'employee_id'}"/>
+                <filter name="group_day" string="Día" context="{'group_by':'date:day'}"/>
+                <filter name="group_month" string="Mes" context="{'group_by':'date:month'}"/>
+            </search>
+        </field>
+    </record>
+    <record id="attendance_meal_action" model="ir.actions.act_window">
+        <field name="name">Control de comidas y salidas COIRTECH</field>
+        <field name="res_model">hr.attendance</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="attendance_meal_list"/>
+        <field name="search_view_id" ref="attendance_meal_search"/>
+        <field name="domain">[('coir_managed', '=', True)]</field>
+        <field name="context">{'create': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Las jornadas registradas en el quiosco COIRTECH aparecerán aquí.</p>
+            <p>Activa los seis movimientos en Ajustes de Asistencias. Utiliza Reporte Excel / PDF para obtener el resumen y todos los movimientos.</p>
+        </field>
+    </record>
+    <menuitem id="attendance_meal_menu" name="Control de comidas y salidas" sequence="12"
+              parent="hr_attendance.menu_hr_attendance_root" action="attendance_meal_action"
+              groups="hr_attendance.group_hr_attendance_officer"/>
+    <menuitem id="attendance_export_menu" name="Reporte Excel / PDF" sequence="13"
+              parent="hr_attendance.menu_hr_attendance_root" action="attendance_report_wizard_action"
+              groups="hr_attendance.group_hr_attendance_officer"/>
+</odoo>

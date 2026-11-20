@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_meal_section_hr,COIRTECH secciones lectura RH,model_coir_meal_section,hr.group_hr_user,1,0,0,0
+access_meal_section_officer,COIRTECH secciones lectura asistencia,model_coir_meal_section,hr_attendance.group_hr_attendance_officer,1,0,0,0
+access_meal_section_manager,COIRTECH secciones administración,model_coir_meal_section,hr_attendance.group_hr_attendance_manager,1,1,1,0
+access_meal_correction_manager,COIRTECH corregir comida,model_coir_meal_correction,hr_attendance.group_hr_attendance_manager,1,1,1,1
+access_work_outing_own,COIRTECH salidas propias,model_coir_work_outing,hr_attendance.group_hr_attendance_own_reader,1,0,0,0
+access_work_outing_officer,COIRTECH salidas asignadas,model_coir_work_outing,hr_attendance.group_hr_attendance_officer,1,0,0,0
+access_work_outing_manager,COIRTECH corregir salidas,model_coir_work_outing,hr_attendance.group_hr_attendance_manager,1,1,0,0
+access_work_correction_manager,COIRTECH revisión salida,model_coir_work_correction,hr_attendance.group_hr_attendance_manager,1,1,1,1
+access_reentry_manager,COIRTECH autorización nueva entrada,model_coir_reentry_authorization,hr_attendance.group_hr_attendance_manager,1,1,1,0
+access_attendance_report_officer,COIRTECH reporte Excel y PDF,model_coir_attendance_report_wizard,hr_attendance.group_hr_attendance_officer,1,1,1,1
