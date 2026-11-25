@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'COIRTECH - Importe con letra en Compras (MXN / USD)',
-    'summary': 'Muestra el total con letra en el PDF de las ordenes de compra.',
-    'version': '19.0.1.0.0',
+    'summary': 'Muestra el total con letra en el idioma del proveedor (espanol o ingles).',
+    'version': '19.0.2.0.0',
     'category': 'Purchases',
     'author': 'COIRTECH',
     'license': 'LGPL-3',

@@ -11,7 +11,7 @@
                  name="coir_purchase_amount_total_in_words_block"
                  class="mt-2 mb-3"
                  style="page-break-inside: avoid; font-size: 14px;">
-                <strong>Importe con letra: </strong>
+                <strong><t t-out="o.coir_purchase_amount_words_label"/> </strong>
                 <span t-field="o.coir_purchase_amount_total_in_words"/>
             </div>
         </xpath>
