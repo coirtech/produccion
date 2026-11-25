@@ -1,0 +1,9 @@
+// Deliberately no new layout, palette, sizing or scanner styles.
+// This stylesheet is loaded only by the unified kiosk's asset bundle.
+.o_multi_company_kiosk {
+    .o_hr_attendance_kiosk_company_image,
+    .coir_meal_brand,
+    .amck-branding {
+        display: none !important;
+    }
+}

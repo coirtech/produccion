@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="kiosk_page" name="Quiosco Multiempresa">
+        <t t-call="web.layout">
+            <t t-set="title">Control de asistencia</t>
+            <t t-set="x_icon" t-value="'data:,'"/>
+            <t t-set="html_data" t-value="{'lang': kiosk_backend_info['lang']}"/>
+            <t t-set="body_classname" t-value="'o_web_client o_hr_attendance_kiosk_body position-relative o_multi_company_kiosk'"/>
+            <t t-set="head">
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+                <meta name="robots" content="noindex, nofollow"/>
+                <meta name="referrer" content="no-referrer"/>
+                <t t-call-assets="attendance_multi_company_kiosk.assets_kiosk" t-js="false"/>
+                <t t-call-assets="attendance_multi_company_kiosk.assets_kiosk" t-css="false"/>
+                <script type="text/javascript">
+                    odoo.define("attendance_multi_company_kiosk.public_kiosk", [
+                        "@hr_attendance/public_kiosk/public_kiosk_app",
+                        "@attendance_multi_company_kiosk/kiosk/native_bridge"
+                    ], function (require) {
+                        require("@attendance_multi_company_kiosk/kiosk/native_bridge");
+                        var { createPublicKioskAttendance } = require("@hr_attendance/public_kiosk/public_kiosk_app");
+                        createPublicKioskAttendance(document, <t t-out="json.dumps(kiosk_backend_info)"/>);
+                    });
+                </script>
+            </t>
+            <noscript><p class="alert alert-info m-3">Activa JavaScript en el navegador para utilizar este quiosco.</p></noscript>
+        </t>
+    </template>
+    <template id="kiosk_unavailable" name="Quiosco no disponible">
+        <html lang="es">
+            <head>
+                <meta charset="utf-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <meta name="robots" content="noindex, nofollow"/>
+                <meta name="referrer" content="no-referrer"/>
+                <title>Quiosco no disponible</title>
+                <link rel="icon" href="data:,"/>
+                <style>body{margin:0;background:#f4f6f8;color:#182631;font-family:system-ui,-apple-system,sans-serif;min-height:100vh;display:grid;place-items:center}main{max-width:36rem;margin:1.5rem;padding:2rem;border:1px solid #dce3e8;border-radius:1.25rem;background:white}h1{font-size:1.7rem}p{line-height:1.65;color:#435563}</style>
+            </head>
+            <body><main><h1>Quiosco no disponible</h1><p t-esc="message or 'Este enlace no está disponible. Solicita al responsable de Asistencias el enlace vigente.'"/></main></body>
+        </html>
+    </template>
+</odoo>

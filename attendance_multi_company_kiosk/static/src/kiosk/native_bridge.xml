@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <!-- Extensions only: native camera, manual selector, PIN and COIRTECH
+         actions keep their existing components, classes and handlers. -->
+    <t t-name="attendance_multi_company_kiosk.manual_company"
+       t-inherit="hr_attendance.public_kiosk_manual_selection" t-inherit-mode="extension">
+        <xpath expr="//h6[@t-esc='employee.display_name']" position="after">
+            <p t-if="employee.company_name" class="small text-muted text-center mb-1" t-esc="employee.company_name"/>
+        </xpath>
+    </t>
+
+    <t t-name="attendance_multi_company_kiosk.pin_company"
+       t-inherit="hr_attendance.KioskPinConfirm" t-inherit-mode="extension">
+        <xpath expr="//h3" position="after">
+            <p t-if="props.employeeData.company_name" class="small text-muted mb-2" t-esc="props.employeeData.company_name"/>
+        </xpath>
+    </t>
+
+    <t t-name="attendance_multi_company_kiosk.actions_company"
+       t-inherit="hr_attendance.public_kiosk_app" t-inherit-mode="extension">
+        <xpath expr="//section[@aria-label='Control de jornada COIRTECH']" position="attributes">
+            <attribute name="aria-label">Control de jornada</attribute>
+        </xpath>
+        <xpath expr="//header/p[hasclass('coir_meal_employee')]" position="after">
+            <p t-if="coirMeal.employee.company_name" class="coir_meal_section mb-2" t-esc="coirMeal.employee.company_name"/>
+        </xpath>
+        <xpath expr="//section[@role='status']/p[hasclass('coir_meal_employee')]" position="after">
+            <p t-if="coirMeal.employee &amp;&amp; coirMeal.employee.company_name" class="coir_meal_section mb-2" t-esc="coirMeal.employee.company_name"/>
+        </xpath>
+        <!-- Hide each branding wrapper; keep the manual-identification
+             button and its original footer intact. -->
+        <xpath expr="//span[img[@alt='Odoo Logo']]" position="attributes">
+            <attribute name="class">amck-branding</attribute>
+        </xpath>
+        <xpath expr="//div[img[@alt='Odoo Logo']]" position="attributes">
+            <attribute name="class" add="amck-branding" separator=" "/>
+        </xpath>
+    </t>
+</templates>

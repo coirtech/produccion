@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="kiosk_list_view" model="ir.ui.view">
+        <field name="name">attendance.multi.company.kiosk.list</field>
+        <field name="model">attendance.multi.company.kiosk</field>
+        <field name="arch" type="xml">
+            <list string="Quioscos Multiempresa" delete="0">
+                <field name="name"/>
+                <field name="company_ids" widget="many2many_tags"/>
+                <field name="identification_mode"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+    <record id="kiosk_form_view" model="ir.ui.view">
+        <field name="name">attendance.multi.company.kiosk.form</field>
+        <field name="model">attendance.multi.company.kiosk</field>
+        <field name="arch" type="xml">
+            <form string="Quiosco Multiempresa" delete="0">
+                <header>
+                    <button name="action_open_kiosk" type="object" string="Abrir quiosco" class="btn-primary" invisible="not id or not active"/>
+                    <button name="action_regenerate_token" type="object" string="Regenerar enlace" invisible="not id"
+                            confirm="El enlace anterior dejará de funcionar. Después tendrás que abrir el nuevo enlace en los dispositivos del quiosco. ¿Deseas continuar?"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="active"/>
+                        <field name="available_company_ids" invisible="1"/>
+                        <field name="company_ids" widget="many2many_tags" required="active"
+                               domain="[('id', 'in', available_company_ids), ('active', '=', True)]"
+                               options="{'no_create': True, 'no_open': True}"/>
+                        <field name="identification_mode"/>
+                        <field name="barcode_source" invisible="identification_mode == 'manual'"/>
+                    </group>
+                    <group string="Enlace compartido" invisible="not id">
+                        <field name="kiosk_url" widget="url" readonly="1"/>
+                    </group>
+                    <p>Puedes agregar o quitar empresas y conservar este mismo enlace. Quitar una empresa impide nuevos movimientos desde este quiosco y conserva sus asistencias anteriores. Las identificaciones pendientes deberán realizarse de nuevo después de guardar los cambios.</p>
+                    <p>Activa las empresas que necesitas en el selector superior de Odoo. Cada empresa participante debe tener habilitados los seis movimientos en Asistencias y Salida automática desactivada.</p>
+                    <p>El PIN se solicita de acuerdo con los ajustes de cada empresa. Puedes escanear credenciales con la cámara o con un lector de código de barras/RFID que funcione como teclado. Para retirar la última empresa, desactiva primero el quiosco.</p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="kiosk_search_view" model="ir.ui.view">
+        <field name="name">attendance.multi.company.kiosk.search</field>
+        <field name="model">attendance.multi.company.kiosk</field>
+        <field name="arch" type="xml">
+            <search string="Quioscos Multiempresa">
+                <field name="name"/>
+                <field name="company_ids"/>
+                <filter name="inactive" string="Desactivados" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+    <record id="kiosk_action" model="ir.actions.act_window">
+        <field name="name">Quiosco Multiempresa</field>
+        <field name="res_model">attendance.multi.company.kiosk</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="kiosk_search_view"/>
+    </record>
+    <menuitem id="kiosk_menu" name="Quiosco Multiempresa" sequence="30"
+              parent="hr_attendance.menu_hr_attendance_configuration" action="kiosk_action"
+              groups="hr_attendance.group_hr_attendance_manager"/>
+</odoo>

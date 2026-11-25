@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="kiosk_allowed_companies_rule" model="ir.rule">
+        <field name="name">Quioscos de las empresas activas autorizadas</field>
+        <field name="model_id" ref="model_attendance_multi_company_kiosk"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_ids', 'not any', [('id', 'not in', company_ids)])]</field>
+    </record>
+</odoo>

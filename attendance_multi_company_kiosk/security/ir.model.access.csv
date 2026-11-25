@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_multi_company_kiosk_manager,Quiosco Multiempresa administradores,model_attendance_multi_company_kiosk,hr_attendance.group_hr_attendance_manager,1,1,1,0
