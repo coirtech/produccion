@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="attendance_report_wizard_layout_form" model="ir.ui.view">
+        <field name="name">coir.attendance.report.wizard.layout.form</field>
+        <field name="model">coir.attendance.report.wizard</field>
+        <field name="inherit_id" ref="attendance_report_wizard_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/p" position="before">
+                <group string="Columnas del reporte" groups="hr_attendance.group_hr_attendance_manager">
+                    <group>
+                        <field name="layout_company_id" options="{'no_create': True, 'no_open': True}"/>
+                        <field name="layout_output_format"/>
+                    </group>
+                    <group>
+                        <button name="action_customize_columns" type="object" string="Personalizar columnas" class="btn-secondary"/>
+                        <div class="text-muted">Elige las columnas de Resumen y Detalle, cambia sus títulos y arrástralas para ordenarlas. Guarda la configuración para los próximos reportes de esa empresa. Puedes copiarla al otro formato o restaurar los valores predeterminados.</div>
+                    </group>
+                </group>
+                <p class="text-muted">Excel y PDF usan las columnas guardadas para cada empresa. La personalización conserva los filtros de empleados excluidos y de ausencias futuras.</p>
+            </xpath>
+        </field>
+    </record>
+</odoo>

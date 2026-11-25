@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="meal_correction_form" model="ir.ui.view">
+        <field name="name">coir.meal.correction.form</field>
+        <field name="model">coir.meal.correction</field>
+        <field name="arch" type="xml">
+            <form string="Corregir registro de comida">
+                <group>
+                    <field name="attendance_id" readonly="1"/>
+                    <field name="meal_start"/>
+                    <field name="meal_end"/>
+                    <field name="reason" placeholder="Explica la corrección; quedará en el historial." required="1"/>
+                </group>
+                <div class="text-muted">Deja Regreso vacío si no existe un regreso confirmado. Una salida final no es un regreso de comida.</div>
+                <footer>
+                    <button name="action_apply" type="object" string="Guardar corrección" class="btn-primary"/>
+                    <button string="Cancelar" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="meal_correction_action" model="ir.actions.act_window">
+        <field name="name">Corregir comida</field>
+        <field name="res_model">coir.meal.correction</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_attendance_id': active_id}</field>
+    </record>
+</odoo>

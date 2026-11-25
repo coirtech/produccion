@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <t t-name="coirtech_attendance_meal_control.public_kiosk_actions"
+       t-inherit="hr_attendance.public_kiosk_app" t-inherit-mode="extension">
+        <xpath expr="//CardLayout" position="inside">
+            <section t-if="state.active_display === 'coir_meal' &amp;&amp; coirMeal.employee"
+                     class="coir_meal_panel mx-auto my-auto" aria-label="Control de jornada COIRTECH">
+                <header class="coir_meal_header text-center">
+                    <div class="coir_meal_brand">COIRTECH</div>
+                    <h1>Control de jornada</h1>
+                    <p class="coir_meal_employee mb-1"><t t-esc="coirMeal.employee.name"/></p>
+                    <p t-if="coirMeal.snapshot.section_name" class="coir_meal_section mb-2">
+                        <t t-esc="coirMeal.snapshot.section_name"/>
+                    </p>
+                    <span class="coir_meal_status"><t t-esc="coirStateLabel()"/></span>
+                    <p t-if="coirMeal.snapshot.state !== 'closed'" class="coir_meal_instruction mt-3 mb-0">Selecciona el movimiento que deseas registrar.</p>
+                    <p t-if="coirMeal.snapshot.blocking_message" class="coir_meal_instruction mt-3 mb-0"><t t-esc="coirMeal.snapshot.blocking_message"/></p>
+                    <p t-if="!coirMeal.snapshot.managed &amp;&amp; coirMeal.snapshot.attendance_id"
+                       class="coir_meal_instruction mt-2 mb-0">Para usar el control de comidas, finaliza primero la jornada que ya estaba abierta.</p>
+                </header>
+
+                <div class="coir_meal_actions">
+                    <t t-foreach="coirMealActions" t-as="action" t-key="action.key">
+                        <button type="button"
+                                t-attf-class="coir_meal_button coir_meal_button_{{ action.key }}"
+                                t-att-disabled="coirMeal.busy || !coirCanAction(action.key)"
+                                t-att-data-action="action.key"
+                                t-on-click="() => this.coirChooseAction(action.key)">
+                            <i t-attf-class="fa {{ action.icon }} coir_meal_action_icon" aria-hidden="true"/>
+                            <span class="coir_meal_action_label"><t t-esc="action.label"/></span>
+                            <span class="coir_meal_action_detail"><t t-esc="action.detail"/></span>
+                        </button>
+                    </t>
+                </div>
+
+                <footer class="coir_meal_footer text-center">
+                    <p class="mb-3">La comida y las salidas de trabajo cuentan dentro de la jornada.</p>
+                    <button type="button" class="btn coir_meal_cancel"
+                            t-att-disabled="coirMeal.busy" t-on-click="() => this.kioskReturn()">Cancelar / Cambiar empleado</button>
+                    <div t-if="coirMeal.busy" class="mt-3" role="status"><i class="fa fa-spinner fa-spin me-2" aria-hidden="true"/>Guardando movimiento…</div>
+                </footer>
+            </section>
+
+            <section t-if="state.active_display === 'coir_meal_result'" class="coir_meal_result text-center mx-auto my-auto" role="status">
+                <div class="coir_meal_brand">COIRTECH</div>
+                <i class="fa fa-check-circle coir_meal_success_icon" aria-hidden="true"/>
+                <h1><t t-esc="coirMeal.message"/></h1>
+                <p t-if="coirMeal.employee" class="coir_meal_employee"><t t-esc="coirMeal.employee.name"/></p>
+                <p t-if="coirMeal.timeLabel" class="coir_meal_result_time"><t t-esc="coirMeal.timeLabel"/></p>
+                <button type="button" class="btn btn-lg coir_meal_confirm" t-on-click="() => this.kioskReturn()">Listo</button>
+            </section>
+
+            <section t-if="state.active_display === 'coir_meal_error'" class="coir_meal_result text-center mx-auto my-auto" role="alert">
+                <div class="coir_meal_brand">COIRTECH</div>
+                <i class="fa fa-info-circle coir_meal_error_icon" aria-hidden="true"/>
+                <h1>Revisa el registro</h1>
+                <p><t t-esc="coirMeal.error"/></p>
+                <button t-if="coirMeal.configFailed" type="button" class="btn btn-lg coir_meal_confirm"
+                        t-att-disabled="coirMeal.busy" t-on-click="() => this.coirLoadConfig()">Volver a intentar</button>
+                <button t-else="" type="button" class="btn btn-lg coir_meal_confirm"
+                        t-att-disabled="coirMeal.busy" t-on-click="() => this.kioskReturn()">Volver a identificarme</button>
+            </section>
+        </xpath>
+    </t>
+
+    <t t-name="coirtech_attendance_meal_control.pin_identity_label"
+       t-inherit="hr_attendance.KioskPinConfirm" t-inherit-mode="extension">
+        <xpath expr="//h5" position="before">
+            <h5 t-if="props.employeeData.coir_meal_identity" class="text-muted my-0">Ingresa tu PIN para elegir el movimiento.</h5>
+        </xpath>
+        <xpath expr="//h5[not(@t-if)]" position="attributes">
+            <attribute name="t-if">!props.employeeData.coir_meal_identity</attribute>
+        </xpath>
+    </t>
+</templates>

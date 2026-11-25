@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="attendance_day_company_rule" model="ir.rule">
+        <field name="name">COIRTECH: reporte de empresas permitidas</field>
+        <field name="model_id" ref="model_coir_attendance_day"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="attendance_day_own_rule" model="ir.rule">
+        <field name="name">COIRTECH: reporte de asistencias propias</field>
+        <field name="model_id" ref="model_coir_attendance_day"/>
+        <field name="groups" eval="[(4, ref('hr_attendance.group_hr_attendance_own_reader'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="attendance_day_officer_rule" model="ir.rule">
+        <field name="name">COIRTECH: reporte de empleados asignados</field>
+        <field name="model_id" ref="model_coir_attendance_day"/>
+        <field name="groups" eval="[(4, ref('hr_attendance.group_hr_attendance_officer'))]"/>
+        <field name="domain_force">[('employee_id.attendance_manager_id', '=', user.id)]</field>
+    </record>
+    <record id="attendance_day_all_rule" model="ir.rule">
+        <field name="name">COIRTECH: todas las asistencias autorizadas</field>
+        <field name="model_id" ref="model_coir_attendance_day"/>
+        <field name="groups" eval="[(4, ref('hr_attendance.group_hr_attendance_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+</odoo>

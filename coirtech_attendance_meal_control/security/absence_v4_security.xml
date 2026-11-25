@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="exclusion_company_rule" model="ir.rule">
+        <field name="name">COIRTECH: historial de exclusión por empresa</field>
+        <field name="model_id" ref="model_coir_attendance_exclusion"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="exclusion_hr_read_access" model="ir.model.access">
+        <field name="name">coir.attendance.exclusion.hr.read</field>
+        <field name="model_id" ref="model_coir_attendance_exclusion"/>
+        <field name="group_id" ref="hr.group_hr_user"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    <record id="exclusion_attendance_manager_read_access" model="ir.model.access">
+        <field name="name">coir.attendance.exclusion.attendance.manager.read</field>
+        <field name="model_id" ref="model_coir_attendance_exclusion"/>
+        <field name="group_id" ref="hr_attendance.group_hr_attendance_manager"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+</odoo>

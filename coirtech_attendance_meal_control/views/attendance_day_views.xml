@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="attendance_day_list" model="ir.ui.view">
+        <field name="name">coir.attendance.day.list</field>
+        <field name="model">coir.attendance.day</field>
+        <field name="arch" type="xml">
+            <list string="Reporte de asistencia" create="0" edit="0" delete="0" default_order="date desc, employee_id, check_in desc">
+                <header>
+                    <button name="action_report_selected" type="object" string="Reporte Excel / PDF"/>
+                </header>
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+                <field name="coir_section_name" optional="hide"/>
+                <field name="entry_display" decoration-danger="is_absence"/>
+                <field name="report_label" invisible="is_absence" optional="show"/>
+                <field name="leave_periods" invisible="not is_indicator" optional="show"/>
+                <field name="leave_hours" widget="float_time" invisible="not is_indicator or not leave_hours" optional="hide"/>
+                <field name="review_reason" invisible="not is_indicator" optional="show"/>
+                <field name="coir_meal_start"/>
+                <field name="coir_meal_end"/>
+                <field name="coir_work_start"/>
+                <field name="coir_work_end"/>
+                <field name="check_out"/>
+                <field name="coir_meal_hours" widget="float_time" invisible="is_indicator or not coir_meal_end" optional="show"/>
+                <field name="coir_work_hours" widget="float_time" invisible="is_indicator or coir_work_status == 'none'" optional="show"/>
+                <field name="worked_hours" widget="float_time" invisible="is_indicator or not check_out" optional="show"/>
+                <field name="coir_meal_status" widget="badge" invisible="is_indicator"
+                       decoration-danger="coir_meal_status in ['open', 'missing']"
+                       decoration-success="coir_meal_status == 'returned'"/>
+                <field name="coir_work_status" widget="badge" invisible="is_indicator"
+                       decoration-danger="coir_work_status in ['open', 'missing']"
+                       decoration-success="coir_work_status == 'returned'"/>
+                <field name="department_id" optional="hide"/>
+                <field name="timezone" optional="hide"/>
+                <field name="out_mode" optional="hide"/>
+                <field name="is_absence" column_invisible="True"/>
+                <field name="is_indicator" column_invisible="True"/>
+                <field name="attendance_id" column_invisible="True"/>
+                <field name="absence_id" column_invisible="True"/>
+                <button name="action_open_source" type="object" string="Abrir" icon="fa-external-link"/>
+            </list>
+        </field>
+    </record>
+    <record id="attendance_day_form" model="ir.ui.view">
+        <field name="name">coir.attendance.day.form</field>
+        <field name="model">coir.attendance.day</field>
+        <field name="arch" type="xml">
+            <form string="Reporte de asistencia" create="0" edit="0" delete="0" duplicate="0">
+                <header>
+                    <button name="action_open_source" type="object" string="Abrir registro original" class="btn-primary"/>
+                    <button name="action_report_selected" type="object" string="Reporte Excel / PDF"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="department_id"/>
+                            <field name="date"/>
+                            <field name="coir_section_name"/>
+                            <field name="timezone"/>
+                        </group>
+                        <group>
+                            <field name="is_absence" invisible="1"/>
+                            <field name="is_indicator" invisible="1"/>
+                            <field name="entry_display" decoration-danger="is_absence"/>
+                            <field name="check_in" invisible="is_indicator"/>
+                            <field name="check_out" invisible="is_indicator"/>
+                            <field name="worked_hours" widget="float_time" invisible="is_indicator or not check_out"/>
+                        </group>
+                    </group>
+                    <group string="Ausencia aprobada o revisión de Recursos Humanos" invisible="not is_indicator or is_absence">
+                        <field name="report_label"/>
+                        <field name="leave_periods"/>
+                        <field name="leave_hours" widget="float_time" invisible="not leave_hours"/>
+                        <field name="review_reason" invisible="not review_reason"/>
+                    </group>
+                    <group invisible="is_indicator">
+                        <group string="Comida">
+                            <field name="coir_meal_start"/>
+                            <field name="coir_meal_end"/>
+                            <field name="coir_meal_hours" widget="float_time" invisible="not coir_meal_end"/>
+                            <field name="coir_meal_status" widget="badge"
+                                   decoration-danger="coir_meal_status in ['open', 'missing']"
+                                   decoration-success="coir_meal_status == 'returned'"/>
+                        </group>
+                        <group string="Última salida de trabajo">
+                            <field name="coir_work_start"/>
+                            <field name="coir_work_end"/>
+                            <field name="coir_work_status" widget="badge"
+                                   decoration-danger="coir_work_status in ['open', 'missing']"
+                                   decoration-success="coir_work_status == 'returned'"/>
+                            <field name="coir_work_hours" widget="float_time" invisible="coir_work_status == 'none'"/>
+                        </group>
+                    </group>
+                    <notebook invisible="is_indicator">
+                        <page string="Todas las salidas de trabajo">
+                            <field name="coir_work_outing_ids" readonly="1">
+                                <list create="0" edit="0" delete="0" default_order="start asc">
+                                    <field name="start"/>
+                                    <field name="end"/>
+                                    <field name="duration_hours" widget="float_time" invisible="not end"/>
+                                    <field name="state" widget="badge"
+                                           decoration-danger="state in ['open', 'missing']"
+                                           decoration-success="state == 'returned'"/>
+                                    <field name="review_note" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="attendance_day_search" model="ir.ui.view">
+        <field name="name">coir.attendance.day.search</field>
+        <field name="model">coir.attendance.day</field>
+        <field name="arch" type="xml">
+            <search string="Reporte de asistencia">
+                <field name="employee_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="department_id"/>
+                <field name="coir_section_name"/>
+                <filter name="date" string="Fecha" date="date"/>
+                <separator/>
+                <filter name="absences" string="Faltas" domain="[('is_absence', '=', True)]"/>
+                <filter name="attendances" string="Asistencias" domain="[('attendance_id', '!=', False)]"/>
+                <filter name="approved_leaves" string="Ausencias aprobadas" domain="[('indicator_state', 'in', ['approved', 'partial'])]"/>
+                <filter name="hr_review" string="Revisión de RH" domain="[('indicator_state', '=', 'review')]"/>
+                <separator/>
+                <filter name="meal_open" string="En comida" domain="[('coir_meal_status', '=', 'open')]"/>
+                <filter name="meal_returned" string="Regreso de comida registrado" domain="[('coir_meal_status', '=', 'returned')]"/>
+                <filter name="meal_missing" string="Comida sin regreso al cierre" domain="[('coir_meal_status', '=', 'missing')]"/>
+                <filter name="work_open" string="Fuera por trabajo" domain="[('coir_work_status', '=', 'open')]"/>
+                <filter name="work_returned" string="Regresos de trabajo registrados" domain="[('coir_work_status', '=', 'returned')]"/>
+                <filter name="work_missing" string="Trabajo sin regreso al cierre" domain="[('coir_work_status', '=', 'missing')]"/>
+                <separator/>
+                <filter name="shift_open" string="Jornada abierta" domain="[('attendance_id', '!=', False), ('check_out', '=', False)]"/>
+                <filter name="shift_closed" string="Jornada cerrada" domain="[('check_out', '!=', False)]"/>
+                <separator/>
+                <filter name="group_employee" string="Empleado" context="{'group_by': 'employee_id'}"/>
+                <filter name="group_company" string="Empresa" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                <filter name="group_department" string="Departamento" context="{'group_by': 'department_id'}"/>
+                <filter name="group_section" string="Sección" context="{'group_by': 'coir_section_name'}"/>
+                <filter name="group_day" string="Día" context="{'group_by': 'date:day'}"/>
+                <filter name="group_month" string="Mes" context="{'group_by': 'date:month'}"/>
+            </search>
+        </field>
+    </record>
+    <!-- Keep the original action and menu identifiers for an in-place upgrade. -->
+    <record id="attendance_meal_action" model="ir.actions.act_window">
+        <field name="name">Reporte de asistencia</field>
+        <field name="res_model">coir.attendance.day</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="attendance_day_list"/>
+        <field name="search_view_id" ref="attendance_day_search"/>
+        <field name="domain">[]</field>
+        <field name="context">{'create': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Las asistencias, faltas, ausencias aprobadas e incidencias de RH aparecerán aquí.</p>
+            <p>Salida de trabajo y Regreso al trabajo muestran la última pareja de movimientos. Abre el registro para consultar todas las salidas.</p>
+            <p>Los permisos tienen su propio registro, sin entradas ni horas trabajadas ficticias. El resumen Excel/PDF reúne la asistencia y el permiso de cada empleado y fecha.</p>
+        </field>
+    </record>
+    <record id="attendance_meal_menu" model="ir.ui.menu">
+        <field name="name">Reporte de asistencia</field>
+    </record>
+    <record id="attendance_day_report_wizard_action" model="ir.actions.act_window">
+        <field name="name">Reporte Excel / PDF</field>
+        <field name="res_model">coir.attendance.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="attendance_report_wizard_form"/>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_coir_attendance_day"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="group_ids" eval="[(4, ref('hr_attendance.group_hr_attendance_officer'))]"/>
+    </record>
+</odoo>

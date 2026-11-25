@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_meal" model="report.paperformat">
+        <field name="name">COIRTECH Asistencias — A4 horizontal</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">35</field>
+        <field name="margin_bottom">18</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_spacing">20</field>
+        <field name="dpi">90</field>
+    </record>
+    <template id="report_meal_journeys">
+        <t t-call="web.html_container">
+            <t t-foreach="batches" t-as="batch">
+                <t t-set="company" t-value="batch['company']"/>
+                <t t-set="o" t-value="batch['document']"/>
+                <t t-set="display_name_in_footer" t-value="False"/>
+                <t t-set="layout_document_title" t-value="False"/>
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2 style="color: #18384b;">Reporte de asistencia</h2>
+                        <p style="font-size: 12px; color: #525b63;">
+                            COIRTECH · Resumen por empleado y fecha laboral
+                        </p>
+                        <t t-foreach="batch['summary_blocks']" t-as="block">
+                            <table class="table table-sm o_main_table table-bordered coir-summary" style="font-size: 11px; width: 100%; table-layout: fixed; margin-top: 18px;">
+                                <thead style="display: table-header-group; background-color: #edf3f5; page-break-inside: avoid;">
+                                    <tr class="coir-block-heading" style="background-color: white; border: 0;">
+                                        <td t-att-colspan="len(block['columns'])" style="font-size: 15px; font-weight: normal; color: #17513c; background-color: white; border: 0; padding: 0 0 10px 0;">
+                                            Resumen
+                                            <t t-if="block['count'] &gt; 1"> · Bloque <span t-out="block['index']"/> de <span t-out="block['count']"/></t>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th t-foreach="block['columns']" t-as="column" style="vertical-align: middle; overflow-wrap: anywhere; word-wrap: break-word;">
+                                            <span t-out="column['label']"/>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="batch['summary']" t-as="row" style="page-break-inside: avoid;">
+                                        <td t-foreach="block['columns']" t-as="column" t-att-style="'vertical-align: top; white-space: pre-line; overflow-wrap: anywhere; word-wrap: break-word;' + ('color: #9c0006; background-color: #ffc7ce; font-weight: bold;' if absence_cell(row, block['columns'], column) else '')">
+                                            <span t-out="format_cell(row, column, 'summary')"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                        <p style="font-size: 11px; color: #525b63;">
+                            Comida y salidas de trabajo ya incluidas: no se suman nuevamente a las horas de jornada.
+                            Si hay jornadas abiertas, las horas cerradas son un subtotal parcial. Un intervalo sin regreso no tiene duración confirmada.
+                            Las horas autorizadas por ausencias y las horas extra aprobadas se muestran aparte; no se añaden a las horas trabajadas.
+                        </p>
+                        <t t-foreach="batch['detail_blocks']" t-as="block">
+                            <table class="table table-sm table-bordered coir-detail" style="font-size: 11px; width: 100%; table-layout: fixed; margin-top: 24px;">
+                                <thead style="display: table-header-group; background-color: #edf3f5; page-break-inside: avoid;">
+                                    <tr class="coir-block-heading" style="background-color: white; border: 0;">
+                                        <td t-att-colspan="len(block['columns'])" style="font-size: 15px; font-weight: normal; color: #17513c; background-color: white; border: 0; padding: 0 0 10px 0;">
+                                            Detalle de movimientos
+                                            <t t-if="block['count'] &gt; 1"> · Bloque <span t-out="block['index']"/> de <span t-out="block['count']"/></t>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th t-foreach="block['columns']" t-as="column" style="vertical-align: middle; overflow-wrap: anywhere; word-wrap: break-word;">
+                                            <span t-out="column['label']"/>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="batch['events']" t-as="event" style="page-break-inside: avoid;">
+                                        <td t-foreach="block['columns']" t-as="column" t-att-style="'vertical-align: top; white-space: pre-line; overflow-wrap: anywhere; word-wrap: break-word;' + ('color: #9c0006; background-color: #ffc7ce; font-weight: bold;' if absence_cell(event, block['columns'], column) else '')">
+                                            <span t-out="format_cell(event, column, 'detail')"/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                        <p style="font-size: 11px; color: #525b63;">
+                            Las referencias C y S enlazan salida y regreso; J identifica la jornada; F, la falta; A, la ausencia o incidencia.
+                            Los movimientos pendientes conservan el regreso vacío. Las duraciones se calculan con instantes UTC.
+                            Las ausencias de días futuros se mantienen ocultas.
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+    <record id="action_report_meal" model="ir.actions.report">
+        <field name="name">COIRTECH — Asistencias y movimientos</field>
+        <field name="model">hr.attendance</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">coirtech_attendance_meal_control.report_meal_journeys</field>
+        <field name="report_file">coirtech_attendance_meal_control.report_meal_journeys</field>
+        <field name="binding_model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_type">report</field>
+        <field name="binding_view_types">list,form</field>
+        <field name="paperformat_id" ref="paperformat_meal"/>
+        <field name="group_ids" eval="[(4, ref('hr_attendance.group_hr_attendance_officer'))]"/>
+        <field name="print_report_name">'COIRTECH_Asistencias_y_movimientos'</field>
+    </record>
+</odoo>

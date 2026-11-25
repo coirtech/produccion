@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="gantt_projection_company_rule" model="ir.rule">
+        <field name="name">COIRTECH: empresas permitidas en el tablero</field>
+        <field name="model_id" ref="model_coir_attendance_gantt"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">['|', ('employee_id.company_id', '=', False), ('employee_id.company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="gantt_projection_read_access" model="ir.model.access">
+        <field name="name">coir.attendance.gantt.read</field>
+        <field name="model_id" ref="model_coir_attendance_gantt"/>
+        <field name="group_id" ref="hr_attendance.group_hr_attendance_own_reader"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    <!-- Mirror the native attendance roles explicitly.  An administrator or
+         attendance officer must not depend on the incidental own-reader
+         implication of base.group_user.  These ACLs only open this read-only
+         model; its source-model ACLs and record rules still select every row. -->
+    <record id="gantt_projection_officer_read_access" model="ir.model.access">
+        <field name="name">coir.attendance.gantt.officer.read</field>
+        <field name="model_id" ref="model_coir_attendance_gantt"/>
+        <field name="group_id" ref="hr_attendance.group_hr_attendance_officer"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    <record id="gantt_projection_user_read_access" model="ir.model.access">
+        <field name="name">coir.attendance.gantt.user.read</field>
+        <field name="model_id" ref="model_coir_attendance_gantt"/>
+        <field name="group_id" ref="hr_attendance.group_hr_attendance_user"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    <record id="gantt_projection_manager_read_access" model="ir.model.access">
+        <field name="name">coir.attendance.gantt.manager.read</field>
+        <field name="model_id" ref="model_coir_attendance_gantt"/>
+        <field name="group_id" ref="hr_attendance.group_hr_attendance_manager"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+</odoo>

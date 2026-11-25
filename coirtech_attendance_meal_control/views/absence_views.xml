@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="settings_absence_control" model="ir.ui.view">
+        <field name="name">res.config.settings.coir.absence</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="settings_meal_control"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='coir_meal_settings']" position="inside">
+                <setting string="Faltas automáticas a las 09:00" company_dependent="1"
+                         invisible="not coir_meal_control_enabled"
+                         help="De lunes a viernes, para empleados activos con jornada laboral ese día y sin entrada registrada. Los sábados y domingos quedan excluidos.">
+                    <field name="coir_absence_enabled"/>
+                    <div class="content-group mt-2" invisible="not coir_absence_enabled">
+                        <label for="coir_absence_tz"/>
+                        <field name="coir_absence_tz"/>
+                        <div class="text-muted">Al registrar una entrada real, la falta se retira automáticamente. Se respetan los permisos y días festivos que cubran la jornada completa.</div>
+                    </div>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+    <record id="absence_list" model="ir.ui.view">
+        <field name="name">coir.attendance.absence.list</field>
+        <field name="model">coir.attendance.absence</field>
+        <field name="arch" type="xml">
+            <list string="Faltas COIRTECH" create="0" edit="0" delete="0" default_order="date desc, employee_id">
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="department_id" optional="hide"/>
+                <field name="state" widget="badge" decoration-danger="state == 'absent'"/>
+                <field name="generated_at" optional="hide"/>
+                <field name="resolved_at" optional="hide"/>
+                <field name="attendance_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="absence_form" model="ir.ui.view">
+        <field name="name">coir.attendance.absence.form</field>
+        <field name="model">coir.attendance.absence</field>
+        <field name="arch" type="xml">
+            <form string="Falta COIRTECH" create="0" edit="0" delete="0" duplicate="0">
+                <sheet>
+                    <div class="oe_title"><h1><field name="state" widget="badge" decoration-danger="state == 'absent'"/></h1></div>
+                    <group>
+                        <group><field name="employee_id"/><field name="date"/><field name="company_id" groups="base.group_multi_company"/><field name="department_id"/></group>
+                        <group><field name="timezone"/><field name="generated_at"/><field name="resolved_at" invisible="state == 'absent'"/><field name="attendance_id" invisible="not attendance_id"/></group>
+                    </group>
+                    <p class="text-muted" invisible="state != 'absent'">La falta se retira al registrar la entrada del empleado en esta fecha. No añade horas trabajadas.</p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="absence_search" model="ir.ui.view">
+        <field name="name">coir.attendance.absence.search</field>
+        <field name="model">coir.attendance.absence</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/><field name="company_id" groups="base.group_multi_company"/><field name="department_id"/>
+                <filter name="date" string="Fecha" date="date"/>
+                <separator/>
+                <filter name="active_absences" string="Faltas vigentes" domain="[('state', '=', 'absent')]"/>
+                <filter name="resolved" string="Entrada registrada" domain="[('state', '=', 'resolved')]"/>
+                <filter name="cancelled" string="Sin jornada exigible" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter name="group_employee" string="Empleado" context="{'group_by': 'employee_id'}"/>
+                <filter name="group_date" string="Día" context="{'group_by': 'date:day'}"/>
+                <filter name="group_company" string="Empresa" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+            </search>
+        </field>
+    </record>
+    <record id="absence_action" model="ir.actions.act_window">
+        <field name="name">Faltas COIRTECH</field>
+        <field name="res_model">coir.attendance.absence</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="absence_search"/>
+        <field name="context">{'search_default_active_absences': 1, 'create': False}</field>
+    </record>
+    <menuitem id="absence_menu" name="Faltas" parent="hr_attendance.menu_hr_attendance_root"
+              action="absence_action" sequence="14" groups="hr_attendance.group_hr_attendance_officer"/>
+    <record id="employee_absence_form" model="ir.ui.view">
+        <field name="name">hr.employee.coir.absence.form</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <div class="mt-2" groups="hr_attendance.group_hr_attendance_officer" invisible="not coir_absent_today">
+                    <field name="coir_absent_today" invisible="1"/>
+                    <field name="coir_absence_label" class="text-danger fw-bold" nolabel="1"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

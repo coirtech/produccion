@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="absence_company_rule" model="ir.rule">
+        <field name="name">COIRTECH: faltas de las empresas autorizadas</field>
+        <field name="model_id" ref="model_coir_attendance_absence"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="absence_own_rule" model="ir.rule">
+        <field name="name">COIRTECH: consultar faltas propias</field>
+        <field name="model_id" ref="model_coir_attendance_absence"/>
+        <field name="groups" eval="[(4, ref('hr_attendance.group_hr_attendance_own_reader'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+    </record>
+    <record id="absence_officer_rule" model="ir.rule">
+        <field name="name">COIRTECH: faltas de empleados asignados</field>
+        <field name="model_id" ref="model_coir_attendance_absence"/>
+        <field name="groups" eval="[(4, ref('hr_attendance.group_hr_attendance_officer'))]"/>
+        <field name="domain_force">[('employee_id.attendance_manager_id', '=', user.id)]</field>
+    </record>
+    <record id="absence_all_rule" model="ir.rule">
+        <field name="name">COIRTECH: todas las faltas autorizadas</field>
+        <field name="model_id" ref="model_coir_attendance_absence"/>
+        <field name="groups" eval="[(4, ref('hr_attendance.group_hr_attendance_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+</odoo>

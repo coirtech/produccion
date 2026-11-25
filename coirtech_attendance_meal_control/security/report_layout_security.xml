@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="report_layout_company_rule" model="ir.rule">
+        <field name="name">COIRTECH: configuración de columnas por empresa</field>
+        <field name="model_id" ref="model_coir_attendance_report_layout"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="report_layout_line_company_rule" model="ir.rule">
+        <field name="name">COIRTECH: columnas del reporte por empresa</field>
+        <field name="model_id" ref="model_coir_attendance_report_layout_line"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

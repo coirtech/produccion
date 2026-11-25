@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="employee_attendance_exclusion_form" model="ir.ui.view">
+        <field name="name">hr.employee.coir.attendance.exclusion</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='identification_group']" position="inside">
+                <field name="coir_attendance_report_excluded"
+                       groups="hr.group_hr_user,hr_attendance.group_hr_attendance_manager"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Control COIRTECH" name="coir_attendance_exclusion_history"
+                      groups="hr.group_hr_user,hr_attendance.group_hr_attendance_manager">
+                    <div class="text-muted mb-3">La exclusión oculta todos los periodos del Reporte de asistencia y detiene las faltas automáticas. Los registros originales se conservan. Al reincorporar al empleado se evalúa el día actual, sin crear faltas de los días excluidos.</div>
+                    <field name="coir_attendance_exclusion_ids" readonly="1">
+                        <list create="0" edit="0" delete="0">
+                            <field name="start_datetime"/>
+                            <field name="excluded_by_id"/>
+                            <field name="end_datetime"/>
+                            <field name="included_by_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+    <record id="coir_leave_type_list" model="ir.ui.view">
+        <field name="name">hr.leave.type.coir.category.list</field>
+        <field name="model">hr.leave.type</field>
+        <field name="arch" type="xml">
+            <list string="Tipos de ausencia COIRTECH" editable="bottom" create="0" delete="0">
+                <field name="name" readonly="1"/>
+                <field name="company_id" readonly="1" groups="base.group_multi_company"/>
+                <field name="request_unit" readonly="1"/>
+                <field name="leave_validation_type" readonly="1"/>
+                <field name="coir_attendance_category"/>
+            </list>
+        </field>
+    </record>
+    <record id="coir_leave_type_action" model="ir.actions.act_window">
+        <field name="name">Tipos de ausencia COIRTECH</field>
+        <field name="res_model">hr.leave.type</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="coir_leave_type_list"/>
+        <field name="domain">['|', ('company_id', '=', False), ('company_id', 'in', allowed_company_ids)]</field>
+        <field name="help" type="html"><p>Relaciona cada tipo de ausencia de Odoo con su categoría del Reporte de asistencia. La correspondencia no cambia la configuración de pagos o nómina.</p></field>
+    </record>
+    <menuitem id="coir_leave_type_menu" name="Tipos de ausencia COIRTECH"
+              parent="hr_attendance.menu_hr_attendance_configuration" action="coir_leave_type_action"
+              sequence="26" groups="hr_holidays.group_hr_holidays_manager"/>
+    <record id="absence_v4_form" model="ir.ui.view">
+        <field name="name">coir.attendance.absence.v4.form</field>
+        <field name="model">coir.attendance.absence</field>
+        <field name="inherit_id" ref="absence_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/group" position="after">
+                <group string="Ausencias aprobadas y revisión de Recursos Humanos">
+                    <field name="report_label"/>
+                    <field name="leave_label" invisible="not leave_label"/>
+                    <field name="leave_periods" invisible="not leave_periods"/>
+                    <field name="leave_hours" widget="float_time" invisible="not leave_label or not leave_hours"/>
+                    <field name="review_reason" invisible="not review_reason"/>
+                    <field name="resolution_reason" invisible="not resolution_reason"/>
+                    <field name="was_automatic_absence"/>
+                    <field name="leave_ids" widget="many2many_tags"
+                           groups="hr_holidays.group_hr_holidays_user"
+                           options="{'no_create': True, 'no_open': True}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+    <record id="absence_v4_search" model="ir.ui.view">
+        <field name="name">coir.attendance.absence.v4.search</field>
+        <field name="model">coir.attendance.absence</field>
+        <field name="inherit_id" ref="absence_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='cancelled']" position="after">
+                <filter name="approved" string="Ausencias aprobadas" domain="[('state', 'in', ['approved', 'partial'])]"/>
+                <filter name="review" string="Revisión de RH" domain="[('state', '=', 'review')]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
