@@ -1,0 +1,6 @@
+/* Ocultar pestaña y controles de firma automática en Odoo 19 */
+.o_web_sign_name_and_signature .o_web_sign_auto_button,
+.o_web_sign_name_and_signature .o_web_sign_auto_select_style,
+.o_web_sign_name_and_signature [data-mode="auto"] {
+    display: none !important;
+}
