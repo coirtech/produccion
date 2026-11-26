@@ -1,6 +1,6 @@
 {
     'name': 'Ventas - Descuento monetario por pieza',
-    'version': '19.0.1.0.3',
+    'version': '19.0.1.0.4',
     'category': 'Sales/Sales',
     'summary': 'Descuento fijo por unidad visible en cotizacion PDF y portal',
     'author': 'COIRTECH',

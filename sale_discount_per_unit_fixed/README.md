@@ -56,3 +56,12 @@ Para una instalación existente en la rama `odometro` de Odoo.sh:
 5. Probar un pedido simple en PDF, luego cotizaciones con secciones, combos y descuentos mixtos antes de pasarlo a producción.
 
 La instalación real en Odoo.sh no ha sido probada aquí; la validación se ha realizado sobre archivos XML/Python y selectores del reporte estándar de Odoo 19.
+
+## Actualizacion 19.0.1.0.4 - eliminar el descuento con cero
+
+- Al cambiar Desc. $/pza de un importe positivo a 0.00, se borra el porcentaje interno y se recalcula el subtotal. Funciona al editar y al guardar, incluso con la columna porcentual oculta.
+- El descuento porcentual estandar sigue disponible en las lineas que no usan importe fijo. Para sustituir un descuento fijo por uno porcentual, primero ponga el importe fijo en cero y guarde; luego introduzca el porcentaje. Las tarifas normales pueden volver a aplicar descuentos si se cambian otras condiciones de precio.
+- Se agrega un campo tecnico oculto para recordar el descuento fijo durante la edicion de una linea nueva. No se alteran los PDF, portal, impuestos ni facturas ya emitidas.
+- No se corrigen masivamente registros antiguos: un porcentaje existente en una linea con importe fijo cero puede ser un descuento porcentual valido. Si una cotizacion editable quedo afectada por la version anterior, vuelva a introducir el importe de descuento fijo y despues cambielo a cero; guarde. Alternativamente, borre manualmente el porcentaje residual. Revise los totales antes de confirmar.
+- Actualice el modulo existente (no desinstale) en una base de pruebas. Pruebe tanto lineas nuevas sin guardar como lineas guardadas, descuentos independientes, PDF y facturacion.
+- Validacion local: sintaxis Python y XML y pruebas aisladas de la logica de calculo, onchange y escritura, con simulacion del ORM; no constituye una prueba de instalacion ni de interfaz en Odoo Enterprise.
