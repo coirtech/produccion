@@ -35,6 +35,10 @@ class TestCoirV4Reports(TransactionCase):
             'resource_calendar_id': cls.calendar.id, 'tz': 'America/Mexico_City', 'ruleset_id': False,
         })
         cls.report = cls.env['report.coirtech_attendance_meal_control.report_meal_journeys']
+        # The assertions below target the default export coordinates. Existing
+        # company layouts are reset only inside this rolled-back test fixture.
+        for layout in cls.env['coir.attendance.report.layout'].search([('company_id', '=', cls.company.id)]):
+            layout.action_reset_defaults()
 
     def setUp(self):
         super().setUp()
@@ -45,9 +49,8 @@ class TestCoirV4Reports(TransactionCase):
     def _leave(self, category='vacation', hours=None, employee=None, day='2026-11-23', approval='no_validation'):
         employee = employee or self.employee
         leave_type = self.env['hr.leave.type'].create({
-            'name': 'Mapped V4 test category', 'requires_allocation': False,
+            'name': 'Permiso nativo V4 — %s' % category, 'requires_allocation': False,
             'leave_validation_type': approval, 'request_unit': 'hour' if hours else 'day',
-            'coir_attendance_category': category,
         })
         values = {
             'employee_id': employee.id, 'holiday_status_id': leave_type.id,
@@ -100,7 +103,7 @@ class TestCoirV4Reports(TransactionCase):
         self.assertEqual(notices.state, 'approved')
         dataset = self.report._coir_dataset(records, notices)
         row = dataset['summary'][0]
-        self.assertEqual(row['notice_label'], 'VACACIONES')
+        self.assertEqual(row['notice_label'], leave.holiday_status_id.name)
         self.assertFalse(row['is_absence'])
         self.assertIsNone(row['first_entry'])
         self.assertIsNone(row['paid_seconds'])
@@ -111,7 +114,7 @@ class TestCoirV4Reports(TransactionCase):
         self.assertIsNone(dataset['events'][0]['journey_id'])
         wizard.action_export_xlsx()
         parts, ns, strings, (summary, detail) = self._xlsx(base64.b64decode(wizard.report_file))
-        self.assertEqual(strings[int(summary['R6'].find('s:v', ns).text)], 'VACACIONES')
+        self.assertEqual(strings[int(summary['R6'].find('s:v', ns).text)], leave.holiday_status_id.name)
         self.assertAlmostEqual(float(summary['T6'].find('s:v', ns).text), 9 / 24)
         for coordinate in ('F6', 'G6', 'K6', 'L6', 'M6'):
             self.assertIsNone(summary[coordinate].find('s:v', ns), coordinate)
@@ -126,14 +129,14 @@ class TestCoirV4Reports(TransactionCase):
         html, _ = self.env['ir.actions.report']._render_qweb_html(
             'coirtech_attendance_meal_control.action_report_meal', [], data=action['data'],
         )
-        self.assertIn('VACACIONES', html.decode())
+        self.assertIn(leave.holiday_status_id.name, html.decode())
         self.assertNotIn('PRIVATE_MEDICAL_NOTE_DO_NOT_EXPORT', html.decode())
         self.assertNotIn('Jornada None', html.decode())
         self.assertEqual(leave.state, 'validate')
         self.assertFalse(self.env['hr.attendance'].search([('employee_id', '=', self.employee.id)]))
 
     def test_partial_leave_with_actual_entry_merges_summary_without_adding_authorised_hours(self):
-        self._leave(category='paid_absence', hours=(8, 13))
+        leave = self._leave(category='paid_absence', hours=(8, 13))
         attendance = self._attendance()
         wizard = self._wizard()
         records, notices = wizard._get_report_records()
@@ -146,7 +149,7 @@ class TestCoirV4Reports(TransactionCase):
         self.assertEqual(row['journeys'], 1)
         self.assertAlmostEqual(row['paid_seconds'], attendance.worked_hours * 3600)
         self.assertEqual(row['leave_seconds'], 5 * 3600)
-        self.assertIn('FALTA CON SUELDO', row['notice_label'])
+        self.assertIn(leave.holiday_status_id.name, row['notice_label'])
         self.assertFalse(row['review_reason'])
         self.assertFalse(any(event['label'] in ('FALTA', 'PRESENTE') for event in dataset['events']))
         self.assertEqual(sum(event['journey_seconds'] or 0 for event in dataset['events']), row['paid_seconds'])
@@ -171,7 +174,7 @@ class TestCoirV4Reports(TransactionCase):
         self.assertFalse(any(event['is_absence'] for event in dataset['events']))
 
     def test_attendance_during_approved_leave_preserves_both_and_flags_overlap(self):
-        self._leave(category='disability')
+        leave = self._leave(category='disability')
         attendance = self._attendance(check_in='2026-11-23 14:00:00', check_out='2026-11-23 15:00:00')
         records, notices = self._wizard()._get_report_records()
         self.assertEqual(notices.state, 'review')
@@ -179,7 +182,7 @@ class TestCoirV4Reports(TransactionCase):
         self.assertEqual(len(dataset['summary']), 1)
         self.assertEqual(dataset['summary'][0]['first_entry'].hour, 8)
         self.assertTrue(dataset['summary'][0]['review_reason'])
-        self.assertIn('INCAPACIDAD', dataset['summary'][0]['notice_label'])
+        self.assertIn(leave.holiday_status_id.name, dataset['summary'][0]['notice_label'])
         self.assertAlmostEqual(dataset['summary'][0]['paid_seconds'], attendance.worked_hours * 3600)
 
     def test_exclusion_removes_all_periods_from_exports_but_keeps_original_sources(self):
@@ -197,7 +200,7 @@ class TestCoirV4Reports(TransactionCase):
         self.employee.coir_attendance_report_excluded = False
         records, notices = self._wizard(date_from='2025-11-01', date_to='2026-11-30')._get_report_records()
         self.assertIn(historical, records)
-        self.assertIn('VACACIONES', notices.mapped('leave_label'))
+        self.assertIn(leave.holiday_status_id.name, notices.mapped('leave_label'))
 
     def test_all_excluded_native_selection_never_falls_back_to_unrestricted_report(self):
         hidden = self._attendance()

@@ -1,8 +1,8 @@
 {
     'name': 'COIRTECH - Asistencias, comidas y salidas',
-    'summary': 'Asistencias con columnas Excel/PDF configurables, exclusión y ausencias aprobadas sin días futuros.',
-    'description': 'Control COIRTECH de asistencia en quiosco y Reporte de asistencia. Integra ausencias aprobadas de Odoo, exclusión de empleados del reporte y faltas automáticas, y revisión de permisos parciales sin asistencia. Conserva los seis movimientos, comida y salidas temporales pagadas, bloqueo tras la salida final, autorización de nueva entrada y reportes Excel/PDF por empresa. Actualiza el módulo original conservando sus registros.',
-    'version': '19.0.4.2.0',
+    'summary': 'Asistencias con columnas Excel/PDF configurables, exclusión y tipos nativos de Tiempo personal sin días futuros.',
+    'description': 'Control COIRTECH de asistencia en quiosco y Reporte de asistencia. Integra solicitudes presentadas y aprobadas de Tiempo personal con su nombre original, exclusión de empleados del reporte y faltas automáticas, y revisión de permisos parciales sin asistencia. Conserva los seis movimientos, comida y salidas temporales pagadas, bloqueo tras la salida final, autorización de nueva entrada y reportes Excel/PDF por empresa. Actualiza el módulo original conservando sus registros.',
+    'version': '19.0.4.3.0',
     'category': 'Human Resources/Attendances',
     'author': 'COIRTECH',
     'license': 'LGPL-3',

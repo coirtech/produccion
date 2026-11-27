@@ -1,4 +1,4 @@
-"""V4: approved Time Off and opt-out policy, without synthetic attendances.
+"""V4.3: submitted Time Off and opt-out policy, without synthetic attendances.
 
 The daily indicator is a projection of original records.  Its authorized hours
 are descriptive and are never added to hr.attendance or payroll totals.
@@ -22,6 +22,7 @@ _CATEGORY_LABELS = {
     "disability": "INCAPACIDAD",
 }
 _REPORT_STATES = ("absent", "approved", "partial", "review")
+_REPORT_LEAVE_STATES = ("confirm", "validate1", "validate")
 
 
 def _merged(intervals):
@@ -217,7 +218,7 @@ class ResCompany(models.Model):
                 super(ResCompany, missing).write({"coir_absence_tracking_started_at": fields.Datetime.now()})
         if newly_enabled:
             # Initial module installation normally leaves the COIRTECH switch
-            # off. Enabling it later must expose existing approved history in
+            # off. Enabling it later must expose existing request history in
             # the list immediately, without requiring an export or waiting for
             # a current-day cron to visit those historical dates.
             self.env["coir.attendance.absence"].sudo()._sync_approved_leaves(company_ids=newly_enabled.ids)
@@ -229,16 +230,15 @@ class HrLeaveType(models.Model):
 
     coir_attendance_category = fields.Selection(
         [(key, label) for key, label in _CATEGORY_LABELS.items()],
-        string="Categoría en el reporte COIRTECH",
-        help="Correspondencia explícita para el reporte. No modifica pagos, descuentos ni configuración de nómina. "
-             "Sin correspondencia, una ausencia aprobada sigue siendo válida y se muestra como tipo por configurar.",
+        string="Categoría anterior COIRTECH", readonly=True,
+        help="Dato de compatibilidad de versiones anteriores. El reporte utiliza directamente el nombre del tipo de Tiempo personal.",
     )
 
     def write(self, vals):
         result = super().write(vals)
-        if {"coir_attendance_category", "request_unit"}.intersection(vals):
+        if {"name", "request_unit"}.intersection(vals):
             leaves = self.env["hr.leave"].sudo().search([
-                ("holiday_status_id", "in", self.ids), ("state", "=", "validate"),
+                ("holiday_status_id", "in", self.ids), ("state", "in", _REPORT_LEAVE_STATES),
                 ("employee_id.company_id.coir_meal_control_enabled", "=", True),
             ])
             self.env["coir.attendance.absence"]._sync_leave_spans(leaves._coir_attendance_spans())
@@ -249,12 +249,12 @@ class CoirAttendanceAbsence(models.Model):
     _inherit = "coir.attendance.absence"
 
     state = fields.Selection(selection_add=[
-        ("approved", "Ausencia aprobada"), ("partial", "Ausencia parcial aprobada"),
+        ("approved", "Ausencia registrada"), ("partial", "Ausencia parcial"),
         ("review", "Revisión de Recursos Humanos"),
     ], ondelete={"approved": "set default", "partial": "set default", "review": "set default"})
-    leave_label = fields.Char(string="Ausencia aprobada", readonly=True)
+    leave_label = fields.Char(string="Ausencia/Incidencia", readonly=True)
     leave_hours = fields.Float(string="Horas autorizadas", readonly=True, digits=(16, 2))
-    leave_periods = fields.Char(string="Periodo autorizado", readonly=True)
+    leave_periods = fields.Char(string="Periodo de ausencia", readonly=True)
     review_reason = fields.Char(string="Incidencia de Recursos Humanos", readonly=True)
     review_due_datetime = fields.Datetime(string="Cierre del tramo pendiente", readonly=True, index=True)
     review_check_pending = fields.Boolean(string="Revisión de cierre pendiente", readonly=True, index=True)
@@ -265,6 +265,10 @@ class CoirAttendanceAbsence(models.Model):
         help="Permite revisar una falta original sin inventar faltas en fechas históricas.",
     )
     had_approved_leave = fields.Boolean(readonly=True, default=False)
+    had_leave_request = fields.Boolean(
+        readonly=True, default=False,
+        help="Conserva la existencia de una solicitud para revisar cancelaciones sin inventar faltas históricas.",
+    )
     leave_ids = fields.Many2many(
         "hr.leave", "coir_attendance_absence_leave_rel", "absence_id", "leave_id",
         string="Ausencias de origen", readonly=True,
@@ -274,7 +278,7 @@ class CoirAttendanceAbsence(models.Model):
     def _coir_visible_in_report(self):
         """Only expose today/past indicators in COIRTECH reports.
 
-        Approved future Time Off remains untouched in hr.leave and in this
+        Future Time Off remains untouched in hr.leave and in this
         source model; it becomes visible automatically on its local day.  This
         is also applied at PDF/Excel construction time to guard saved wizard
         selections or calls which bypass the read-only SQL report view.
@@ -298,9 +302,9 @@ class CoirAttendanceAbsence(models.Model):
             if record.state == "absent":
                 record.report_label = "FALTA"
             elif record.state == "approved":
-                record.report_label = record.leave_label or "AUSENCIA APROBADA"
+                record.report_label = record.leave_label or "AUSENCIA"
             elif record.state == "partial":
-                record.report_label = "%s — PARCIAL" % (record.leave_label or "AUSENCIA APROBADA")
+                record.report_label = "%s — PARCIAL" % (record.leave_label or "AUSENCIA")
             elif record.state == "review":
                 record.report_label = "%s — REVISAR RH" % record.leave_label if record.leave_label else "REVISAR RH"
             elif record.state == "resolved":
@@ -350,9 +354,14 @@ class CoirAttendanceAbsence(models.Model):
 
     @api.model
     def _approved_for_day(self, employee, day, timezone):
+        """Compatibility name: return all submitted, non-rejected requests.
+
+        The indicator deliberately does not present approval status. Authorized
+        hours remain restricted to the final ``validate`` state below.
+        """
         start, stop = _day_bounds(day, timezone)
         return self.env["hr.leave"].sudo().search([
-            ("employee_id", "=", employee.id), ("state", "=", "validate"),
+            ("employee_id", "=", employee.id), ("state", "in", _REPORT_LEAVE_STATES),
             ("date_from", "<", _utc_naive(stop)), ("date_to", ">", _utc_naive(start)),
         ], order="date_from, date_to, id")
 
@@ -372,16 +381,19 @@ class CoirAttendanceAbsence(models.Model):
     def _leave_day_values(self, employee, leaves, work, known_schedule, day, timezone, now, attendances, can_review):
         start, stop = _day_bounds(day, timezone)
         bounds = [(_utc_naive(start), _utc_naive(stop))]
-        labels, periods, covered_by_leave = [], [], []
+        labels, periods, covered_by_leave, approved_coverage = [], [], [], []
         zone = pytz.timezone(timezone)
+        # These labels are stored and shared by all report readers. Resolve
+        # native translations in the employee company's language so a cron or
+        # another user's interface cannot alternate their language on refresh.
+        report_lang = employee.company_id.partner_id.lang or "en_US"
         applicable = self.env["hr.leave"].sudo()
         for leave in leaves:
             coverage = _intersect([(leave.date_from, leave.date_to)], work if known_schedule else bounds)
             if not coverage:
                 continue
             applicable |= leave
-            label = _CATEGORY_LABELS.get(leave.holiday_status_id.coir_attendance_category,
-                                         "AUSENCIA APROBADA — TIPO POR CONFIGURAR")
+            label = leave.holiday_status_id.with_context(lang=report_lang).name
             if label not in labels:
                 labels.append(label)
             for begin, end in coverage:
@@ -389,6 +401,8 @@ class CoirAttendanceAbsence(models.Model):
                 local_end = pytz.UTC.localize(end).astimezone(zone)
                 periods.append("%s–%s (%s)" % (local_begin.strftime("%H:%M"), local_end.strftime("%H:%M"), label))
             covered_by_leave.append((leave.id, coverage))
+            if leave.state == "validate":
+                approved_coverage.extend(coverage)
         if not applicable:
             return None
         covered = _merged([interval for _leave_id, values in covered_by_leave for interval in values])
@@ -396,36 +410,40 @@ class CoirAttendanceAbsence(models.Model):
         reasons = []
         for index, (_leave_id, values) in enumerate(covered_by_leave):
             if any(_intersect(values, other) for _other_id, other in covered_by_leave[index + 1:]):
-                reasons.append("Ausencias aprobadas superpuestas; revisar las solicitudes de origen.")
+                reasons.append("Solicitudes de Tiempo personal superpuestas; revisar las solicitudes de origen.")
                 break
         # Compare actual intervals, not just dates. A return exactly at the end
-        # of an authorized interval is not an overlap.
+        # of a requested interval is not an overlap.
         real_intervals = [(attendance.check_in, min(attendance.check_out or now, now))
                           for attendance in attendances]
         if (_intersect(real_intervals, covered)
                 or any(begin <= attendance.check_in < end
                        for attendance in attendances for begin, end in covered)):
-            reasons.append("Asistencia registrada durante una ausencia aprobada.")
+            reasons.append("Asistencia registrada durante un periodo de Tiempo personal.")
         if not known_schedule:
-            reasons.append("Horario de trabajo no definido o flexible; revisar la cobertura autorizada.")
+            reasons.append("Horario de trabajo no definido o flexible; revisar la cobertura del periodo de ausencia.")
         elif remainder and not attendances and now >= max(end for begin, end in remainder) and can_review:
-            reasons.append("Ausencia parcial aprobada sin registro de asistencia en el resto de la jornada.")
+            reasons.append("Ausencia parcial sin registro de asistencia en el resto de la jornada.")
         state = "review" if reasons else ("partial" if remainder else "approved")
         review_due = max(end for begin, end in remainder) if known_schedule and remainder else False
-        # During an excluded interval, keep approved source information for
+        # During an excluded interval, keep source request information for
         # future visibility, but never create a no-show incidence.
-        return {
+        values = {
             "state": state, "leave_label": " + ".join(labels),
-            "leave_hours": sum((end - begin).total_seconds() / 3600 for begin, end in covered) if known_schedule else 0.0,
+            "leave_hours": sum((end - begin).total_seconds() / 3600
+                               for begin, end in _merged(approved_coverage)) if known_schedule else 0.0,
             "leave_periods": "; ".join(periods), "review_reason": " ".join(reasons) or False,
             "review_due_datetime": review_due,
             "review_check_pending": bool(review_due and not attendances and now < review_due),
-            "leave_ids": [Command.set(applicable.ids)], "had_approved_leave": True,
+            "leave_ids": [Command.set(applicable.ids)], "had_leave_request": True,
             "attendance_id": attendances[:1].id or False,
             "start_datetime": min(begin for begin, end in covered),
             "end_datetime": max(end for begin, end in covered),
-            "resolution_reason": "Cubierta por ausencia aprobada de Odoo.",
+            "resolution_reason": "Periodo registrado en Tiempo personal de Odoo.",
         }
+        if applicable.filtered(lambda leave: leave.state == "validate"):
+            values["had_approved_leave"] = True
+        return values
 
     @api.model
     def _persist_day_outcome(self, employee, company, day, timezone, now, record, values):
@@ -478,7 +496,7 @@ class CoirAttendanceAbsence(models.Model):
         if not known_schedule and not leaves:
             # Keep the pre-V4 fixed-09:00 policy for flexible/duration-based
             # schedules when native Odoo supplies effective work intervals.
-            # With approved Time Off, an approximate schedule must not pretend
+            # With Time Off requests, an approximate schedule must not pretend
             # to establish exact partial-day coverage.
             work = service._work_intervals_by_employee(employee, day, timezone).get(employee.id, [])
             known_schedule = bool(work)
@@ -486,7 +504,7 @@ class CoirAttendanceAbsence(models.Model):
         tracked = service._review_period_is_tracked(employee, company, day, timezone, now, record)
         values = service._leave_day_values(employee, leaves, work, known_schedule, day, timezone, now, attendances, tracked)
         if values:
-            # Existing approved sources may be shown in historical reports even
+            # Existing source requests may be shown in historical reports even
             # if they predate installing COIRTECH. No automatic FALTA is created.
             if not company.coir_meal_control_enabled and not record:
                 return record
@@ -521,10 +539,10 @@ class CoirAttendanceAbsence(models.Model):
                 "resolution_reason": False, "start_datetime": min(begin for begin, end in work),
                 "end_datetime": max(end for begin, end in work),
             })
-        if record and record.had_approved_leave and not attendances and day < today and tracked:
+        if record and (record.had_leave_request or record.had_approved_leave) and not attendances and day < today and tracked:
             return service._persist_day_outcome(employee, company, day, timezone, now, record, {
                 **common, "state": "review",
-                "review_reason": "Ausencia aprobada cancelada o modificada sin registro de asistencia; revisión de Recursos Humanos.",
+                "review_reason": "Solicitud de Tiempo personal cancelada, rechazada o modificada sin registro de asistencia; revisión de Recursos Humanos.",
                 "resolution_reason": "Revisión histórica sin crear una falta automática.",
             })
         if record:
@@ -589,7 +607,10 @@ class CoirAttendanceAbsence(models.Model):
 
     @api.model
     def _sync_approved_leaves(self, date_from=None, date_to=None, company_ids=None):
-        """Populate approved source information, including before installing V4.
+        """Populate submitted/approved sources, including pre-install history.
+
+        Keep the V4 method name for installed companion modules and reports.
+        Approval in hr.leave is never modified by this projection.
 
         Callers outside sudo can only request their currently authorized
         companies. Sudo reads are limited to those employees; ordinary record
@@ -607,7 +628,7 @@ class CoirAttendanceAbsence(models.Model):
         now = fields.Datetime.now()
         for company in companies:
             timezone = company.coir_absence_tz or "America/Mexico_City"
-            domain = [("employee_id.company_id", "=", company.id), ("state", "=", "validate")]
+            domain = [("employee_id.company_id", "=", company.id), ("state", "in", _REPORT_LEAVE_STATES)]
             lower = upper = None
             if date_from:
                 lower = fields.Date.to_date(date_from)
@@ -629,7 +650,8 @@ class CoirAttendanceAbsence(models.Model):
             result |= self._sync_leave_spans(spans).sudo()
             # Removed permissions must also disappear from already materialized
             # rows, even after an offline import or an interrupted old cron.
-            stale_domain = [("company_id", "=", company.id), ("had_approved_leave", "=", True)]
+            stale_domain = [("company_id", "=", company.id), "|",
+                            ("had_leave_request", "=", True), ("had_approved_leave", "=", True)]
             if lower:
                 stale_domain.append(("date", ">=", lower))
             if upper:
@@ -641,7 +663,7 @@ class CoirAttendanceAbsence(models.Model):
 
     @api.model
     def _initialize_v4_tracking(self):
-        """Run on install/update before the initial approved-source projection."""
+        """Run on install/update before the initial Time Off projection."""
         companies = self.env["res.company"].sudo().search([
             ("coir_meal_control_enabled", "=", True), ("coir_absence_enabled", "=", True),
             ("coir_absence_tracking_started_at", "=", False),

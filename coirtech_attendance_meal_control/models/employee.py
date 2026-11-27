@@ -19,7 +19,13 @@ class HrEmployee(models.Model):
     coir_meal_section_id = fields.Many2one(
         "coir.meal.section", string="Sección COIRTECH",
         check_company=True, ondelete="restrict",
-        groups="hr_attendance.group_hr_attendance_user,hr.group_hr_user",
+        # This field belongs to the private employee profile. Attendance
+        # officers do not necessarily have private HR access: adding their
+        # group here makes native employee prefetch request the field from
+        # hr.employee.public, where it deliberately does not exist. Kiosk and
+        # attendance services already take the section snapshot through their
+        # authenticated sudo employee; reports read that immutable snapshot.
+        groups="hr.group_hr_user",
         help="Agrupa los reportes. No impone horarios de entrada ni de comida.",
     )
 

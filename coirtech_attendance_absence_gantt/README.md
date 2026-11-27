@@ -1,6 +1,6 @@
 # COIRTECH — Faltas en el Gantt original
 
-**V4.2 · Odoo 19 · Versión 19.0.4.2.0**
+**V4.3 · Odoo 19 · Versión 19.0.4.3.0**
 
 Complemento para Odoo 19 Enterprise. Se instala automáticamente cuando están
 instalados `coirtech_attendance_meal_control` y `hr_attendance_gantt`.
@@ -18,9 +18,9 @@ asistencia, se muestra un mensaje explicativo; no se abre un formulario con
 horas ficticias. Cuando Odoo usa la acción de formulario del registro, se abre
 el detalle de la falta.
 
-V4 conserva este alcance: los permisos aprobados y las incidencias de RH se
+V4 conserva este alcance: las solicitudes de Tiempo personal y las incidencias de RH se
 presentan en el Reporte de asistencia. No agrega nuevas barras de vacaciones
-al Gantt. Al retirar una FALTA actual por exclusión o por permiso aprobado,
+al Gantt. Al retirar una FALTA actual por exclusión o por solicitud vigente de Tiempo personal,
 deja de mostrarse su indicador; las asistencias originales permanecen.
 
 La actualización del módulo principal concede lectura explícita de la
@@ -55,3 +55,5 @@ campos de ese tipo, hay que declarar sus equivalentes de solo lectura antes de
 dar por validada esa combinación de módulos.
 
 V4.2 incorpora la personalización de columnas Excel/PDF en el módulo principal. El código del puente Gantt y la apariencia de las asistencias reales se conservan.
+
+V4.3 conserva el código del puente. El módulo principal incorpora solicitudes presentadas sin aprobación final y nombres nativos; esos cambios se ven en el Reporte de asistencia y sus archivos, sin añadir barras nuevas al Gantt.

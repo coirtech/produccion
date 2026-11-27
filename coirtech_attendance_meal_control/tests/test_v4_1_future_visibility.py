@@ -254,7 +254,7 @@ class TestCoirV41NoFutureTimeOff(TransactionCase):
     def test_future_unmapped_partial_and_review_indicators_are_also_hidden(self):
         _today, future = self._next_workday()
         _employee, leave, source = self._approved_source(False, future)
-        self.assertIn('TIPO POR CONFIGURAR', source.report_label)
+        self.assertEqual(source.report_label, leave.holiday_status_id.name)
         self._assert_not_projected(source)
         for state in ('partial', 'review'):
             source._service().write({'state': state, 'review_reason': 'Review fixture'})

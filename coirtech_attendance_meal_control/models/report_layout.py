@@ -37,7 +37,7 @@ _SUMMARY_COLUMNS = [
     _column('status', 'Estado del resumen', width=31),
     _column('reviewed', 'Jornadas revisadas por RH', 'integer', 22),
     _column('notice_label', 'Ausencia / incidencia', width=34),
-    _column('leave_periods', 'Periodo autorizado', width=42),
+    _column('leave_periods', 'Periodo de ausencia', width=42),
     _column('leave_seconds', 'Horas autorizadas (h:mm)', 'duration', 23),
     _column('review_reason', 'Incidencia para RH', width=44),
     _column('meal_start', 'Salida a comer', 'datetime', 22,
@@ -55,8 +55,8 @@ _SUMMARY_COLUMNS = [
     _column('leave_label', 'Tipo de ausencia', width=30),
     _column('journey_counts', 'Cerradas / abiertas', width=18),
     _column('pending_counts', 'Pendientes comida / salida', width=23),
-    _column('notice_detail', 'Ausencia aprobada / revisión RH', width=44,
-            help_text='Combina la etiqueta de ausencia, el periodo autorizado y la incidencia de RH.'),
+    _column('notice_detail', 'Ausencia / revisión RH', width=44,
+            help_text='Combina el nombre del tipo de Tiempo personal, su periodo y la incidencia de RH.'),
 ]
 _DETAIL_COLUMNS = [
     _column('company_name', 'Empresa'),
@@ -74,7 +74,7 @@ _DETAIL_COLUMNS = [
     _column('interval_state', 'Estado del intervalo / jornada', width=31),
     _column('reviewed', 'Jornada revisada por RH', width=22),
     _column('review_note', 'Último motivo de revisión', width=45),
-    _column('leave_periods', 'Periodo autorizado', width=42),
+    _column('leave_periods', 'Periodo de ausencia', width=42),
     _column('leave_seconds', 'Horas autorizadas (h:mm)', 'duration', 23),
     _column('review_reason', 'Incidencia para RH', width=44),
     _column('leave_label', 'Tipo de ausencia', width=30),

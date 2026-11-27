@@ -273,7 +273,7 @@ class CoirAttendanceReportWizard(models.TransientModel):
             'Las faltas no tienen horas trabajadas. Las horas autorizadas y extra aprobadas se muestran aparte.'
         )
         detail_note = (
-            'Cada fila es un movimiento, falta, ausencia aprobada o incidencia. C y S enlazan salida y regreso; '
+            'Cada fila es un movimiento, falta, ausencia o incidencia. C y S enlazan salida y regreso; '
             'J identifica la jornada; F, la falta; A, la ausencia o incidencia. '
             'Las duraciones de comida/salida aparecen solo al regreso; las horas de jornada y extra aprobadas, solo en Salida final.'
         )
