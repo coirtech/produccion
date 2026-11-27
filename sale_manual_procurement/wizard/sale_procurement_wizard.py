@@ -11,17 +11,14 @@ class SaleProcurementWizard(models.TransientModel):
         string='Orden de Venta',
         required=True,
     )
-    global_action = fields.Selection(
+    action_type = fields.Selection(
         selection=[
             ('purchase', 'Cotización de Compra'),
             ('manufacture', 'Orden de Fabricación'),
         ],
-        string='Aplicar a toda la orden',
-    )
-    line_ids = fields.One2many(
-        'sale.procurement.wizard.line',
-        'wizard_id',
-        string='Productos',
+        string='Opción',
+        required=True,
+        default='purchase',
     )
 
     @staticmethod
@@ -38,78 +35,36 @@ class SaleProcurementWizard(models.TransientModel):
         if not stockable_lines:
             return False
 
-        lines_vals = []
-        actions_used = set()
-        for s_line in stockable_lines:
-            bom_map = self.env['mrp.bom']._bom_find(
-                s_line.product_id,
-                company_id=sale.company_id.id,
-                bom_type='normal',
-            )
-            has_bom = bool(bom_map.get(s_line.product_id))
-            default_action = 'manufacture' if has_bom else 'purchase'
-            actions_used.add(default_action)
-            uom = self._get_sale_line_uom(s_line)
-
-            lines_vals.append(Command.create({
-                'sale_line_id': s_line.id,
-                'product_id': s_line.product_id.id,
-                'product_uom_qty': s_line.product_uom_qty,
-                'product_uom_id': uom.id,
-                'action_type': default_action,
-            }))
-
-        global_default = list(actions_used)[0] if len(actions_used) == 1 else False
         return self.create({
             'sale_order_id': sale.id,
-            'global_action': global_default,
-            'line_ids': lines_vals,
+            'action_type': 'purchase',
         })
-
-    @api.onchange('global_action')
-    def _onchange_global_action(self):
-        if self.global_action:
-            for line in self.line_ids:
-                line.action_type = self.global_action
 
     def action_generate_documents(self):
         self.ensure_one()
         sale = self.sale_order_id
+        stockable_lines = sale.order_line.filtered(
+            lambda l: not l.display_type and l.product_id.type in ('consu', 'product')
+        )
+        if not stockable_lines:
+            return {'type': 'ir.actions.act_window_close'}
 
-        purchase_lines = self.line_ids.filtered(lambda l: l.action_type == 'purchase')
-        mrp_lines = self.line_ids.filtered(lambda l: l.action_type == 'manufacture')
-
-        # 1. Validar Listas de Materiales antes de crear registros
-        bom_by_line = {}
-        for m_line in mrp_lines:
-            bom_map = self.env['mrp.bom']._bom_find(
-                m_line.product_id,
-                company_id=sale.company_id.id,
-                bom_type='normal',
-            )
-            bom = bom_map.get(m_line.product_id)
-            if not bom:
-                raise UserError(_(
-                    'El producto "%s" no tiene una Lista de Materiales (BoM) activa para fabricarse.'
-                ) % m_line.product_id.display_name)
-            bom_by_line[m_line.id] = bom
-
-        # 2. Crear UNA SOLA Cotización de Compra (RFQ) sin proveedor asignado
-        if purchase_lines:
+        # OPCIÓN 1: Crear UNA SOLA Cotización de Compra (RFQ) sin proveedor asignado
+        if self.action_type == 'purchase':
             warehouse = sale.warehouse_id
             picking_type = warehouse.in_type_id
             po_line_fields = self.env['purchase.order.line']._fields
             uom_field_name = 'product_uom_id' if 'product_uom_id' in po_line_fields else 'product_uom'
 
             po_line_vals = []
-            for p_line in purchase_lines:
-                s_line = p_line.sale_line_id
+            for s_line in stockable_lines:
+                uom = self._get_sale_line_uom(s_line)
                 line_dict = {
-                    'product_id': p_line.product_id.id,
-                    'name': s_line.name or p_line.product_id.display_name,
-                    'product_qty': p_line.product_uom_qty,
-                    uom_field_name: p_line.product_uom_id.id,
-                    'price_unit': p_line.product_id.standard_price or 0.0,
+                    'product_id': s_line.product_id.id,
+                    'name': s_line.name or s_line.product_id.display_name,
+                    'product_qty': s_line.product_uom_qty,
+                    uom_field_name: uom.id,
+                    'price_unit': s_line.product_id.standard_price or 0.0,
                 }
                 if 'date_planned' in po_line_fields:
                     line_dict['date_planned'] = sale.commitment_date or fields.Datetime.now()
@@ -133,74 +88,60 @@ class SaleProcurementWizard(models.TransientModel):
 
             self.env['purchase.order'].create(po_vals)
 
-        # 3. Crear Órdenes de Fabricación (MO) nativas con su Lista de Materiales
-        mo_fields = self.env['mrp.production']._fields
-        for m_line in mrp_lines:
-            bom = bom_by_line[m_line.id]
+        # OPCIÓN 2: Crear Órdenes de Fabricación (MO) nativas con su Lista de Materiales
+        elif self.action_type == 'manufacture':
+            bom_by_line = {}
+            for s_line in stockable_lines:
+                bom_map = self.env['mrp.bom']._bom_find(
+                    s_line.product_id,
+                    company_id=sale.company_id.id,
+                    bom_type='normal',
+                )
+                bom = bom_map.get(s_line.product_id)
+                if not bom:
+                    raise UserError(_(
+                        'El producto "%s" no tiene una Lista de Materiales (BoM) activa para fabricarse.'
+                    ) % s_line.product_id.display_name)
+                bom_by_line[s_line.id] = bom
+
+            mo_fields = self.env['mrp.production']._fields
             warehouse = sale.warehouse_id
             mo_picking_type = warehouse.manu_type_id
 
-            mo_vals = {
-                'product_id': m_line.product_id.id,
-                'product_qty': m_line.product_uom_qty,
-                'product_uom_id': m_line.product_uom_id.id,
-                'bom_id': bom.id,
-                'origin': sale.name,
-                'company_id': sale.company_id.id,
-                'date_start': fields.Datetime.now(),
-                'manual_sale_order_id': sale.id,
-            }
-            if 'procurement_group_id' in mo_fields and 'procurement_group_id' in sale._fields and sale.procurement_group_id:
-                mo_vals['procurement_group_id'] = sale.procurement_group_id.id
-            if 'sale_line_id' in mo_fields:
-                mo_vals['sale_line_id'] = m_line.sale_line_id.id
-            if 'reference_ids' in mo_fields and 'reference_ids' in sale._fields and sale.reference_ids:
-                mo_vals['reference_ids'] = [Command.set(sale.reference_ids.ids)]
+            for s_line in stockable_lines:
+                bom = bom_by_line[s_line.id]
+                uom = self._get_sale_line_uom(s_line)
 
-            if mo_picking_type:
-                mo_vals['picking_type_id'] = mo_picking_type.id
-                mo_vals['location_src_id'] = mo_picking_type.default_location_src_id.id or warehouse.lot_stock_id.id
-                mo_vals['location_dest_id'] = mo_picking_type.default_location_dest_id.id or warehouse.lot_stock_id.id
+                mo_vals = {
+                    'product_id': s_line.product_id.id,
+                    'product_qty': s_line.product_uom_qty,
+                    'product_uom_id': uom.id,
+                    'bom_id': bom.id,
+                    'origin': sale.name,
+                    'company_id': sale.company_id.id,
+                    'date_start': fields.Datetime.now(),
+                    'manual_sale_order_id': sale.id,
+                }
+                if 'procurement_group_id' in mo_fields and 'procurement_group_id' in sale._fields and sale.procurement_group_id:
+                    mo_vals['procurement_group_id'] = sale.procurement_group_id.id
+                if 'sale_line_id' in mo_fields:
+                    mo_vals['sale_line_id'] = s_line.id
+                if 'reference_ids' in mo_fields and 'reference_ids' in sale._fields and sale.reference_ids:
+                    mo_vals['reference_ids'] = [Command.set(sale.reference_ids.ids)]
 
-            self.env['mrp.production'].create(mo_vals)
+                if mo_picking_type:
+                    mo_vals['picking_type_id'] = mo_picking_type.id
+                    mo_vals['location_src_id'] = mo_picking_type.default_location_src_id.id or warehouse.lot_stock_id.id
+                    mo_vals['location_dest_id'] = mo_picking_type.default_location_dest_id.id or warehouse.lot_stock_id.id
+
+                self.env['mrp.production'].create(mo_vals)
 
         return {'type': 'ir.actions.act_window_close'}
 
 
+# Se conserva el modelo vacío para permitir una actualización limpia desde versiones anteriores
 class SaleProcurementWizardLine(models.TransientModel):
     _name = 'sale.procurement.wizard.line'
     _description = 'Línea del Asistente de Compra o Fabricación'
 
-    wizard_id = fields.Many2one(
-        'sale.procurement.wizard',
-        required=True,
-        ondelete='cascade',
-    )
-    sale_line_id = fields.Many2one(
-        'sale.order.line',
-        string='Línea de Venta',
-        required=True,
-    )
-    product_id = fields.Many2one(
-        'product.product',
-        string='Producto',
-        required=True,
-    )
-    product_uom_qty = fields.Float(
-        string='Cantidad',
-        required=True,
-    )
-    product_uom_id = fields.Many2one(
-        'uom.uom',
-        string='UdM',
-        required=True,
-    )
-    action_type = fields.Selection(
-        selection=[
-            ('purchase', 'Cotización de Compra'),
-            ('manufacture', 'Orden de Fabricación'),
-        ],
-        string='Generar',
-        required=True,
-        default='purchase',
-    )
+    wizard_id = fields.Many2one('sale.procurement.wizard', ondelete='cascade')

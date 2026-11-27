@@ -26,11 +26,14 @@ class SaleOrder(models.Model):
             wizard = self.env['sale.procurement.wizard'].create_from_sale_order(self)
             if wizard:
                 return {
-                    'name': _('Generar Compra o Fabricación'),
+                    'name': _('Seleccionar opción'),
                     'type': 'ir.actions.act_window',
                     'res_model': 'sale.procurement.wizard',
                     'res_id': wizard.id,
                     'view_mode': 'form',
                     'target': 'new',
+                    'context': {
+                        'dialog_size': 'small',
+                    },
                 }
         return res

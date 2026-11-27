@@ -1,8 +1,8 @@
 {
     'name': 'Abastecimiento Manual al Confirmar Venta (Compra o Fabricación)',
-    'version': '19.0.2.0.0',
+    'version': '19.0.4.0.0',
     'category': 'Sales/Sales',
-    'summary': 'Permite elegir de forma sencilla entre Cotización de Compra u Orden de Fabricación al confirmar una venta.',
+    'summary': 'Menú compacto al confirmar venta para elegir Cotización de Compra u Orden de Fabricación.',
     'author': 'Custom',
     'license': 'LGPL-3',
     'depends': [
