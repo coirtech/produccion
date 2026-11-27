@@ -4,38 +4,26 @@
         <field name="name">sale.procurement.wizard.form</field>
         <field name="model">sale.procurement.wizard</field>
         <field name="arch" type="xml">
-            <form string="Generar Abastecimiento">
-                <div class="mb-3 d-flex gap-2">
-                    <button name="action_set_all_purchase"
-                            type="object"
-                            string="Marcar todo: Cotización de Compra"
-                            class="btn-secondary btn-sm"
-                            icon="fa-shopping-cart"/>
-                    <button name="action_set_all_manufacture"
-                            type="object"
-                            string="Marcar todo: Orden de Fabricación"
-                            class="btn-secondary btn-sm"
-                            icon="fa-cogs"/>
-                </div>
-                <p class="text-muted">
-                    Los productos marcados como <b>Cotización de Compra</b> se agruparán en una sola solicitud sin proveedor asignado para que lo selecciones dentro de la cotización.
-                </p>
-                <field name="sale_order_id" invisible="1"/>
+            <form string="Generar Compra o Fabricación">
+                <group>
+                    <field name="sale_order_id" invisible="1"/>
+                    <field name="global_action" widget="radio" options="{'horizontal': true}"/>
+                </group>
                 <field name="line_ids">
-                    <list editable="bottom" create="0" delete="1">
-                        <field name="sale_line_id" column_invisible="1"/>
-                        <field name="product_id"/>
+                    <list editable="bottom" create="0" delete="0">
+                        <field name="sale_line_id" column_invisible="1" force_save="1"/>
+                        <field name="product_uom_id" column_invisible="1" force_save="1"/>
+                        <field name="product_id" readonly="1" force_save="1"/>
                         <field name="product_uom_qty"/>
-                        <field name="product_uom_id"/>
-                        <field name="action_type" widget="radio" options="{'horizontal': true}"/>
+                        <field name="action_type"/>
                     </list>
                 </field>
                 <footer>
                     <button name="action_generate_documents"
-                            string="Generar Documentos"
+                            string="Confirmar"
                             type="object"
                             class="btn-primary"/>
-                    <button string="Cerrar sin generar"
+                    <button string="Cancelar"
                             class="btn-secondary"
                             special="cancel"/>
                 </footer>

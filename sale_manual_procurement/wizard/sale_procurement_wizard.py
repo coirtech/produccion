@@ -10,7 +10,13 @@ class SaleProcurementWizard(models.TransientModel):
         'sale.order',
         string='Orden de Venta',
         required=True,
-        readonly=True,
+    )
+    global_action = fields.Selection(
+        selection=[
+            ('purchase', 'Cotización de Compra'),
+            ('manufacture', 'Orden de Fabricación'),
+        ],
+        string='Aplicar a toda la orden',
     )
     line_ids = fields.One2many(
         'sale.procurement.wizard.line',
@@ -25,53 +31,46 @@ class SaleProcurementWizard(models.TransientModel):
         return s_line.product_uom
 
     @api.model
-    def default_get(self, fields_list):
-        res = super().default_get(fields_list)
-        sale_id = self.env.context.get('default_sale_order_id')
-        if sale_id and 'line_ids' in fields_list:
-            sale = self.env['sale.order'].browse(sale_id)
-            lines_vals = []
-            for s_line in sale.order_line.filtered(
-                lambda l: not l.display_type and l.product_id.type in ('consu', 'product')
-            ):
-                bom_map = self.env['mrp.bom']._bom_find(
-                    s_line.product_id,
-                    company_id=sale.company_id.id,
-                    bom_type='normal',
-                )
-                has_bom = bool(bom_map.get(s_line.product_id))
-                uom = self._get_sale_line_uom(s_line)
-                lines_vals.append(Command.create({
-                    'sale_line_id': s_line.id,
-                    'product_id': s_line.product_id.id,
-                    'product_uom_qty': s_line.product_uom_qty,
-                    'product_uom_id': uom.id,
-                    'action_type': 'manufacture' if has_bom else 'purchase',
-                }))
-            res['line_ids'] = lines_vals
-        return res
+    def create_from_sale_order(self, sale):
+        stockable_lines = sale.order_line.filtered(
+            lambda l: not l.display_type and l.product_id.type in ('consu', 'product')
+        )
+        if not stockable_lines:
+            return False
 
-    def action_set_all_purchase(self):
-        self.ensure_one()
-        self.line_ids.write({'action_type': 'purchase'})
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': self._name,
-            'res_id': self.id,
-            'view_mode': 'form',
-            'target': 'new',
-        }
+        lines_vals = []
+        actions_used = set()
+        for s_line in stockable_lines:
+            bom_map = self.env['mrp.bom']._bom_find(
+                s_line.product_id,
+                company_id=sale.company_id.id,
+                bom_type='normal',
+            )
+            has_bom = bool(bom_map.get(s_line.product_id))
+            default_action = 'manufacture' if has_bom else 'purchase'
+            actions_used.add(default_action)
+            uom = self._get_sale_line_uom(s_line)
 
-    def action_set_all_manufacture(self):
-        self.ensure_one()
-        self.line_ids.write({'action_type': 'manufacture'})
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': self._name,
-            'res_id': self.id,
-            'view_mode': 'form',
-            'target': 'new',
-        }
+            lines_vals.append(Command.create({
+                'sale_line_id': s_line.id,
+                'product_id': s_line.product_id.id,
+                'product_uom_qty': s_line.product_uom_qty,
+                'product_uom_id': uom.id,
+                'action_type': default_action,
+            }))
+
+        global_default = list(actions_used)[0] if len(actions_used) == 1 else False
+        return self.create({
+            'sale_order_id': sale.id,
+            'global_action': global_default,
+            'line_ids': lines_vals,
+        })
+
+    @api.onchange('global_action')
+    def _onchange_global_action(self):
+        if self.global_action:
+            for line in self.line_ids:
+                line.action_type = self.global_action
 
     def action_generate_documents(self):
         self.ensure_one()
@@ -111,12 +110,13 @@ class SaleProcurementWizard(models.TransientModel):
                     'product_qty': p_line.product_uom_qty,
                     uom_field_name: p_line.product_uom_id.id,
                     'price_unit': p_line.product_id.standard_price or 0.0,
-                    'date_planned': sale.commitment_date or fields.Datetime.now(),
                 }
-                if 'sale_order_id' in po_line_fields:
-                    line_dict['sale_order_id'] = sale.id
+                if 'date_planned' in po_line_fields:
+                    line_dict['date_planned'] = sale.commitment_date or fields.Datetime.now()
                 if 'sale_line_id' in po_line_fields:
                     line_dict['sale_line_id'] = s_line.id
+                if 'sale_order_id' in po_line_fields:
+                    line_dict['sale_order_id'] = sale.id
                 po_line_vals.append(Command.create(line_dict))
 
             po_vals = {
@@ -152,6 +152,10 @@ class SaleProcurementWizard(models.TransientModel):
             }
             if 'procurement_group_id' in mo_fields and 'procurement_group_id' in sale._fields and sale.procurement_group_id:
                 mo_vals['procurement_group_id'] = sale.procurement_group_id.id
+            if 'sale_line_id' in mo_fields:
+                mo_vals['sale_line_id'] = m_line.sale_line_id.id
+            if 'reference_ids' in mo_fields and 'reference_ids' in sale._fields and sale.reference_ids:
+                mo_vals['reference_ids'] = [Command.set(sale.reference_ids.ids)]
 
             if mo_picking_type:
                 mo_vals['picking_type_id'] = mo_picking_type.id
@@ -181,7 +185,6 @@ class SaleProcurementWizardLine(models.TransientModel):
         'product.product',
         string='Producto',
         required=True,
-        readonly=True,
     )
     product_uom_qty = fields.Float(
         string='Cantidad',
@@ -191,14 +194,13 @@ class SaleProcurementWizardLine(models.TransientModel):
         'uom.uom',
         string='UdM',
         required=True,
-        readonly=True,
     )
     action_type = fields.Selection(
         selection=[
             ('purchase', 'Cotización de Compra'),
             ('manufacture', 'Orden de Fabricación'),
         ],
-        string='Acción a Generar',
+        string='Generar',
         required=True,
         default='purchase',
     )
