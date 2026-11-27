@@ -86,7 +86,7 @@ class TestCoirV4Absences(TransactionCase):
         self.assertEqual(leave.state, "validate")
         self.assertEqual(self._record(), original)
         self.assertEqual(original.state, "approved")
-        self.assertEqual(original.report_label, "VACACIONES")
+        self.assertEqual(original.report_label, self.vacation.name)
         self.assertEqual(original.leave_hours, 8)
         self.assertTrue(original.was_automatic_absence)
         self.assertFalse(original.attendance_id)
@@ -97,17 +97,17 @@ class TestCoirV4Absences(TransactionCase):
         self.assertEqual(self._record(), original)
         self.assertEqual(original.state, "approved")
 
-    def test_all_four_explicit_categories_are_distinct_from_automatic_falta(self):
-        for leave_type, day, label in (
-            (self.vacation, "2026-11-23", "VACACIONES"),
-            (self.paid, "2026-11-24", "FALTA CON SUELDO"),
-            (self.unpaid, "2026-11-25", "FALTA SIN SUELDO"),
-            (self.disability, "2026-11-26", "INCAPACIDAD"),
+    def test_native_type_names_are_distinct_from_automatic_falta(self):
+        for leave_type, day in (
+            (self.vacation, "2026-11-23"),
+            (self.paid, "2026-11-24"),
+            (self.unpaid, "2026-11-25"),
+            (self.disability, "2026-11-26"),
         ):
             self._leave(leave_type, day)
             record = self._record(day)
             self.assertEqual(record.state, "approved")
-            self.assertEqual(record.leave_label, label)
+            self.assertEqual(record.leave_label, leave_type.name)
             self.assertFalse(record.was_automatic_absence)
 
     def test_unmapped_approved_type_protects_against_false_falta(self):
@@ -115,23 +115,26 @@ class TestCoirV4Absences(TransactionCase):
         self._leave(leave_type)
         record = self._run()
         self.assertEqual(record.state, "approved")
-        self.assertIn("TIPO POR CONFIGURAR", record.leave_label)
+        self.assertEqual(record.leave_label, leave_type.name)
         leave_type.coir_attendance_category = "disability"
-        self.assertEqual(record.leave_label, "INCAPACIDAD")
+        self.assertEqual(record.leave_label, leave_type.name)
 
     def test_second_approval_pending_is_not_final_approval(self):
         leave_type = self._new_type("vacation", validation="both")
         leave = self._leave(leave_type)
         self.assertEqual(leave.state, "confirm")
-        self.assertEqual(self._run().state, "absent")
+        self.assertEqual(self._run().state, "approved")
+        self.assertEqual(self._record().leave_hours, 0)
         with patch.object(fields.Datetime, "now", return_value=datetime(2026, 11, 23, 16)):
             leave.action_approve(check_state=False)
         self.assertEqual(leave.state, "validate1")
-        self.assertEqual(self._record().state, "absent")
+        self.assertEqual(self._record().state, "approved")
+        self.assertEqual(self._record().leave_hours, 0)
         with patch.object(fields.Datetime, "now", return_value=datetime(2026, 11, 23, 17)):
             leave.action_approve()
         self.assertEqual(leave.state, "validate")
         self.assertEqual(self._record().state, "approved")
+        self.assertEqual(self._record().leave_hours, 8)
 
     def test_partial_hours_have_no_full_falta_and_review_only_after_remaining_work(self):
         self._run()
@@ -157,7 +160,7 @@ class TestCoirV4Absences(TransactionCase):
         self.assertFalse(record.review_reason)
         self.assertEqual(record.attendance_id, attendance)
         self.assertEqual(attendance.check_in, datetime(2026, 11, 23, 19, 5))
-        self.assertIn("VACACIONES", record.leave_label)
+        self.assertEqual(record.leave_label, self.half_day.name)
 
     def test_afternoon_permission_closes_review_at_end_of_required_morning(self):
         self._leave(self.hourly, request_hour_from=13, request_hour_to=17)
@@ -182,7 +185,7 @@ class TestCoirV4Absences(TransactionCase):
         attendance = self._attendance("2026-11-23 16:00:00")
         record = self._record()
         self.assertEqual(record.state, "review")
-        self.assertIn("durante una ausencia aprobada", record.review_reason)
+        self.assertIn("durante un periodo de Tiempo personal", record.review_reason)
         self.assertEqual(leave.state, "validate")
         self.assertEqual(attendance.check_in, datetime(2026, 11, 23, 16))
         self.assertTrue(record.leave_ids)
@@ -200,8 +203,8 @@ class TestCoirV4Absences(TransactionCase):
         record = self._record()
         self.assertEqual(record.state, "approved")
         self.assertEqual(record.leave_hours, 8)
-        self.assertIn("FALTA CON SUELDO", record.leave_label)
-        self.assertIn("VACACIONES", record.leave_label)
+        self.assertIn(self.hourly.name, record.leave_label)
+        self.assertIn(afternoon_type.name, record.leave_label)
         self.assertFalse(record.review_reason)
 
     def test_overlapping_approved_permissions_are_reviewed_without_double_counting(self):
@@ -244,7 +247,7 @@ class TestCoirV4Absences(TransactionCase):
         with patch.object(fields.Datetime, "now", return_value=datetime(2026, 11, 25, 18)):
             leave.write({"state": "cancel"})
         self.assertEqual(record.state, "review")
-        self.assertIn("cancelada o modificada", record.review_reason)
+        self.assertIn("cancelada, rechazada o modificada", record.review_reason)
         self.assertFalse(record.was_automatic_absence)
 
     def test_today_cancel_without_original_falta_uses_current_cutoff(self):
@@ -389,5 +392,5 @@ class TestCoirV4Absences(TransactionCase):
         self._leave()
         self.assertEqual(record.state, "review")
         self.assertIn("flexible", record.review_reason)
-        self.assertEqual(record.leave_label, "VACACIONES")
+        self.assertEqual(record.leave_label, self.vacation.name)
         self.assertEqual(record.leave_hours, 0)

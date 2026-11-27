@@ -47,7 +47,6 @@ class TestCoirV4Day(TransactionCase):
         leave_type = self.env['hr.leave.type'].create({
             'name': 'V4 day native leave', 'requires_allocation': False,
             'leave_validation_type': approval, 'request_unit': 'hour' if hours else 'day',
-            'coir_attendance_category': category,
         })
         values = {
             'employee_id': self.employee.id, 'holiday_status_id': leave_type.id,
@@ -71,13 +70,13 @@ class TestCoirV4Day(TransactionCase):
         })
 
     def test_approved_leave_has_own_readonly_row_without_a_fake_clock_time(self):
-        self._leave()
+        leave = self._leave()
         row = self._rows()
         self.assertEqual(len(row), 1)
         self.assertTrue(row.is_indicator)
         self.assertFalse(row.is_absence)
         self.assertEqual(row.indicator_state, 'approved')
-        self.assertEqual(row.report_label, 'VACACIONES')
+        self.assertEqual(row.report_label, leave.holiday_status_id.name)
         self.assertFalse(row.entry_display)
         self.assertFalse(row.check_in)
         self.assertFalse(row.attendance_id)
@@ -144,7 +143,7 @@ class TestCoirV4Day(TransactionCase):
         with self.assertRaises(AccessError):
             notice_row.read(['report_label', 'leave_periods'])
 
-    def test_pending_request_is_not_justification_until_final_approval(self):
+    def test_pending_request_has_native_label_but_no_authorized_hours_until_approval(self):
         leave = self._leave(approval='hr')
         self.assertEqual(leave.state, 'confirm')
         self.env['coir.attendance.absence']._generate_for_day(
@@ -152,8 +151,11 @@ class TestCoirV4Day(TransactionCase):
             now=fields.Datetime.to_datetime('2026-11-23 15:00:00'),
         )
         row = self._rows()
-        self.assertTrue(row.is_absence)
-        self.assertEqual(row.entry_display, 'FALTA')
+        self.assertFalse(row.is_absence)
+        self.assertFalse(row.entry_display)
+        self.assertEqual(row.report_label, leave.holiday_status_id.name)
+        self.assertFalse(row.leave_hours)
+        self.assertEqual(leave.state, 'confirm')
         row_id = row.id
         leave.action_approve()
         row = self._rows()
@@ -161,7 +163,8 @@ class TestCoirV4Day(TransactionCase):
         self.assertEqual(row.indicator_state, 'approved')
         self.assertFalse(row.is_absence)
         self.assertFalse(row.entry_display)
-        self.assertEqual(row.report_label, 'VACACIONES')
+        self.assertEqual(row.report_label, leave.holiday_status_id.name)
+        self.assertEqual(row.leave_hours, 9)
 
     def test_approved_and_review_columns_have_no_custom_red_or_green_decoration(self):
         view = self.env.ref('coirtech_attendance_meal_control.attendance_day_list')

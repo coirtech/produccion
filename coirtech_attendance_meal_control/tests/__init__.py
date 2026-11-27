@@ -13,3 +13,7 @@ from . import test_v4_1_future_visibility
 from . import test_v4_2_layouts
 from . import test_v4_2_wizard
 from . import test_v4_2_reports
+from . import test_v4_3_absences
+from . import test_v4_3_employee_permissions
+from . import test_v4_3_reports
+from . import test_v4_4_leave_labels

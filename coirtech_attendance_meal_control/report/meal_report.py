@@ -32,7 +32,7 @@ class MealReport(models.AbstractModel):
         ))
 
     def _coir_related_notices(self, docs, sync=True):
-        """Approved leave belonging to selected real journeys, with source ACLs."""
+        """Applicable Time Off belonging to real journeys, with source ACLs."""
         notices = self.env['coir.attendance.absence']
         if not docs or not notices.has_access('read'):
             return notices
@@ -248,7 +248,7 @@ class MealReport(models.AbstractModel):
 
         # Independent notices never create worked journeys or an artificial punch.
         # Only an obsolete automatic FALTA is suppressed by actual attendance.
-        # Approved leave and RH review must coexist with the real clock times.
+        # Time Off requests and RH review coexist with the real clock times.
         absences = absences.filtered(lambda rec: rec.state != 'absent' or (
             rec.company_id.id, rec.employee_id.id, rec.date
         ) not in summary)
@@ -258,8 +258,9 @@ class MealReport(models.AbstractModel):
             label = 'FALTA' if is_absence else (absence.report_label or _('REVISAR RH'))
             leave_label = absence.leave_label or ''
             leave_periods = absence.leave_periods or ''
-            # An unknown/flexible schedule is sent to RH without estimating a
-            # duration. A blank is preferable to claiming zero authorised time.
+            # Only approved intervals contribute authorized hours. Pending
+            # requests and unknown schedules leave this column blank; they
+            # still retain their original type and period in the report.
             leave_seconds = absence.leave_hours * 3600 if absence.leave_hours > 0 else None
             review_reason = absence.review_reason or ''
             absence_event = {

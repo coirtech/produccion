@@ -1,136 +1,98 @@
-# Validación de COIRTECH Asistencias V4.2
+# Validación de COIRTECH Asistencias V4.3
 
-**Versión entregada: 19.0.4.2.0 · Fecha: 23 de noviembre de 2026**
+**Versión 19.0.4.3.0 · Comprobación: 27 de noviembre de 2026.**
 
-## Resultado funcional
+Se utilizó Odoo 19 real con PostgreSQL, Asistencias, Tiempo personal y Manufactura. El código oficial de la instalación de prueba corresponde al commit `e06b404aef857d606e302814324e3fb97cdd9aec`. Se instaló además `attendance_multi_company_kiosk` V1.1 para comprobar su compatibilidad.
 
-**157 pruebas funcionales ejecutadas en el ORM real de Odoo 19: 0 fallos, 0 errores.**
+## Resultado final de las pruebas automáticas
 
-Se probó la instalación desde cero en una base aislada y la actualización de una segunda base que tenía instalada la V4.1 original. Ambas cargaron los modelos, vistas, permisos y reglas correctamente. Después de corregir únicamente la paginación visual del PDF, se repitieron las **35 pruebas de reportes y visibilidad de ausencias**, también con 0 fallos y 0 errores. La modificación visual no cambió el código Python, los datos ni los permisos.
+**189 pruebas terminadas: 0 fallos y 0 errores.** Incluyen la suite del módulo principal y 14 pruebas del complemento multiempresa. Se ejecutaron en una base de pruebas limpia, separada de la muestra con columnas personalizadas usada para comprobar la migración.
 
-| Grupo | Pruebas funcionales |
-|---|---:|
-| Comidas originales | 13 |
-| Seis movimientos, bloqueo y autorización V2 | 17 |
-| Reportes V2 | 5 |
-| Faltas V3 | 22 |
-| Reportes V3 | 6 |
-| Vista unificada V3 | 6 |
-| Proyección Gantt y permisos | 12 |
-| Exclusión y ausencias aprobadas V4 | 28 |
-| Reportes V4 | 8 |
-| Vista diaria V4 | 6 |
-| Ausencias futuras V4.1, ampliadas | 5 |
-| Configuración de columnas y formularios V4.2 | 15 |
-| Acceso a la configuración desde el asistente V4.2 | 3 |
-| Excel/PDF y nuevos campos opcionales V4.2 | 11 |
-| **Total** | **157** |
+La entrega incorpora 20 pruebas nuevas para las reglas de V4.3, sus reportes y los permisos de empleados. Las comprobaciones cubren:
 
-El contador interno de 185 de la primera ejecución incluye preparación de clases; no representa 185 pruebas funcionales. Los documentos VALIDACION_V4.md, VALIDACION_V3.md y VALIDACION_V2.md conservan evidencia histórica de sus respectivas versiones y no sustituyen esta comprobación.
+- Solicitudes presentadas, primera aprobación y aprobación final.
+- Nombre nativo del tipo, sin categoría adicional ni indicación de aprobación pendiente.
+- Nombre traducido estable según el idioma de empresa, aunque cambie el contexto del usuario o cron.
+- Renombrado del tipo y uso automático de tipos nuevos.
+- Intervalos aprobados junto a intervalos sin aprobar: cobertura de ausencia correcta y horas autorizadas solo de los aprobados.
+- Solicitudes parciales, superposiciones y revisión de RH conforme a las reglas anteriores.
+- Rechazo actual y cancelación histórica sin inventar una FALTA retroactiva.
+- Solicitudes futuras ocultas y empleados excluidos en listas, agrupaciones y exportaciones.
+- Conservación de marcajes reales, comidas y salidas pagadas, bloqueo después de Salida final y autorización adicional de un solo uso.
+- Columnas configurables por empresa/formato, datos numéricos del Excel y plantillas PDF.
+- Permisos de lectura, restricciones por empresa y acceso público frente a privado del empleado.
 
-## Entorno utilizado
+La sintaxis Python y XML de ambos módulos también se comprobó antes del empaquetado.
 
-- Código oficial de Odoo 19 Community, commit `e06b404aef857d606e302814324e3fb97cdd9aec`.
-- Python 3.12, PostgreSQL 17.12 y módulos nativos completos Asistencias, Ausencias y sus dependencias.
-- Mismo conjunto oficial de nueve módulos adicionales de Ausencias verificado en V4; no se utilizaron sustitutos ficticios de Odoo o Enterprise.
-- PDF generado por QWeb y wkhtmltopdf 0.12.6.1 a través de los controladores HTTP reales.
-- Las bases y los empleados utilizados son datos sintéticos del entorno aislado, sin conexión con la base de producción del cliente.
+## Reproducción y corrección del error de Manufactura
 
-## Personalización comprobada
+Se instaló primero el ZIP V4.2 original. Con un usuario que tenía Manufactura y Asistencias, sin el grupo privado de RH, se reprodujo este error al realizar una lectura normal de empleados sin caché:
 
-- Lectura de valores predeterminados sin crear configuraciones automáticamente.
-- Configuraciones independientes por empresa, Excel/PDF y Resumen/Detalle.
-- Ocultar, renombrar, ordenar, guardar y volver a abrir conserva las elecciones.
-- Creación desde el menú y edición mediante el formulario nativo `Form` de Odoo, incluidos los campos de las dos tablas de columnas.
-- Vista del asistente compilada para administrador y responsable de Asistencias sin acceso privado al perfil de empleado.
-- Copiar al otro formato y restaurar solo el formato seleccionado.
-- Validación de encabezados vacíos o mayores de 80 caracteres y de una sección sin columnas visibles.
-- Sustitución de la última columna visible en una sola operación de guardado, sin rechazar un estado intermedio del formulario.
-- Catálogo cerrado: se rechaza mover columnas entre configuraciones, editar claves internas o introducir expresiones/campos arbitrarios.
-- Administradores autorizados para configurar; responsables autorizados para leer/exportar; límites de compañía y acceso mediante IDs conocidos.
-- Excel con nombres de hoja únicos, encabezados literales, ausencia de fórmulas inyectadas, fechas/duraciones numéricas y valores negativos nativos correctamente conservados.
-- PDF con encabezados escapados, columnas ocultas sin reaparecer en títulos o pie nativo y bloques de hasta ocho columnas.
-- Última salida y regreso correspondientes: un intervalo nuevo abierto nunca hereda el regreso de uno anterior.
-- Horas extra aprobadas nativas mostradas una sola vez por jornada cerrada, sin añadirlas otra vez a las horas trabajadas ni incluir las pendientes de aprobación.
-- FALTA roja conservada, con identificación alternativa de la fila cuando se ocultan sus columnas de estado; permisos aprobados con aspecto normal.
+> The fields “coir_meal_section_id”, which you are trying to read, are not available for employee public profiles.
 
-## Ausencias futuras y reglas anteriores
+La misma comprobación después de actualizar a V4.3 funcionó para usuarios internos, de Asistencias y de Administración de Asistencias. Ninguno necesitó recibir acceso privado a Recursos Humanos. La lectura explícita de campos privados siguió siendo rechazada.
 
-Se ejecutaron las reglas de V1–V4 junto con las de la versión actual. En particular:
+Se comprobó también que RH puede cambiar la sección y que el quiosco guarda correctamente la sección correspondiente a la asistencia, conservando la sección histórica aunque después cambie la del empleado.
 
-- Las cuatro categorías futuras se omiten de búsquedas, conteos, agrupaciones, IDs conocidos, selecciones guardadas, Excel y PDF, incluso en solicitudes directas de exportación.
-- Una solicitud que abarca pasado, hoy y futuro conserva sus fuentes y solo muestra las filas hasta hoy según la zona horaria guardada del indicador.
-- La zona del usuario o un cambio posterior de zona de compañía no adelanta una fecha del indicador ya registrado.
-- Ausencias sin categoría, permisos parciales e incidencias RH futuras siguen la misma restricción de presentación.
-- La exclusión por empleado oculta todos los periodos sin borrar registros; los empleados archivados no reciben nuevas faltas.
-- Corte fijo de las 09:00 de lunes a viernes, sin faltas automáticas en sábado/domingo; la entrada real resuelve la falta.
-- Permiso parcial sin asistencia: revisión RH al concluir el tramo exigible, nunca una falta automática de día completo.
-- Comidas/salidas pagadas, seis movimientos, bloqueo tras Salida final, autorización adicional y permisos del Gantt continúan funcionando.
+Referencia primaria del criterio aplicado: https://github.com/odoo/odoo/blob/19.0/addons/hr/models/hr_employee.py . La clase de Odoo indica que los campos exclusivos del modelo privado deben limitarse al grupo de RH para evitar su precarga desde perfiles públicos.
 
-Los archivos de lógica de ausencias, asistencia, empleados, comidas/salidas, quiosco y puente Gantt se compararon con la base V4.1: permanecen sin cambios. La actualización añade configuración y presentación de exportaciones sobre esos datos.
+## Actualización real desde V4.2
 
-## Actualización real V4.1 → V4.2
+En otra base se instaló V4.2, se crearon registros de muestra y se guardaron sus datos antes de actualizar. La actualización ejecutó la migración V4.3, sin desinstalar los complementos.
 
-Se instaló el ZIP V4.1 original antes de crear una muestra y guardar sus valores. Después se actualizó a V4.2 y se compararon de nuevo los registros:
+| Datos de la muestra | Resultado |
+|---|---|
+| 7 empleados | Identidades, empresas, secciones, exclusión y credencial conservadas. |
+| 5 asistencias | Identificadores, entradas, salidas, horas trabajadas y movimientos conservados. |
+| 2 salidas temporales | Relaciones y fechas conservadas; una siguió abierta. |
+| 1 comida abierta | Permaneció abierta, sin un regreso inventado. |
+| 1 autorización adicional consumida | Permaneció consumida y vinculada a su asistencia. |
+| 3 solicitudes de Tiempo personal | Estados, fechas, tipo y duración originales conservados. |
+| 1 intervalo de exclusión | Historial conservado. |
+| 104 definiciones de columnas | Identidades, orden, visibilidad y encabezados personalizados conservados. |
+| 2 indicadores anteriores | Identificadores y procedencia conservados. |
+| Quiosco multiempresa existente | Enlace, clave, empresas, modo de identificación y cámara conservados. |
 
-| Registros de la muestra | Conservados |
-|---|---:|
-| Asistencias originales | 7 |
-| Salidas de trabajo | 3 |
-| Autorización adicional ya consumida | 1 |
-| Solicitudes nativas aprobadas | 4 |
-| Empleados y casillas de exclusión | 11 |
-| Intervalo de historial de exclusión | 1 |
-| Indicadores diarios originales | 8 |
+La solicitud presentada que V4.2 no mostraba quedó representada con **Permiso para trámite**, con cero horas autorizadas y manteniendo `confirm` en Tiempo personal. La aprobada pasó de su categoría antigua al nombre **Descanso autorizado**, manteniendo sus ocho horas autorizadas. La solicitud futura continuó aprobada en origen y oculta en el reporte. El empleado excluido siguió oculto.
 
-Se conservaron identidad, fechas, horas, política COIRTECH, relaciones y estados pertinentes. La jornada COIRTECH de nueve horas mantuvo nueve horas; la nativa mantuvo ocho. Una comida y una salida de trabajo abiertas continuaron pendientes. La autorización consumida siguió impidiendo una entrada adicional. El historial excluido permaneció disponible en origen y oculto en el Reporte.
+Los únicos encabezados antiguos reemplazados fueron los que coincidían exactamente con los valores predeterminados previstos por la migración. Un encabezado propio del usuario, **Mi periodo personalizado**, y el encabezado **Colaborador conservado**, con su posición personalizada, se conservaron.
 
-Los dos indicadores futuros de la incapacidad siguieron existiendo con su aprobación original, sin mostrarse en la vista ni en los archivos. Guardar columnas, copiar entre formatos y restaurar no alteró los registros originales. No aparecieron asistencias ficticias ni faltas automáticas históricas nuevas.
+No aparecieron asistencias ficticias. La jornada de nueve horas mantuvo sus nueve horas, incluyendo la comida y la salida temporal; la jornada adicional siguió teniendo una hora.
 
-## Descargas reales y revisión visual final
+## Descargas reales y revisión visual
 
-Se utilizó una sesión HTTP autenticada en el servidor de prueba, mediante los botones y métodos públicos que usa la interfaz de Odoo. Se abrieron configuraciones desde el asistente, guardaron encabezados/orden/visibilidad y comprobaron sus valores al volver a abrirlas.
+Se accedió al servidor local con una sesión HTTP autenticada y se usaron los mismos métodos públicos que los botones de exportación de Odoo.
 
-| Configuración | Excel real | PDF real | Revisión visual |
-|---|---|---:|---|
-| Valores predeterminados, una empresa | 2 hojas | 4 páginas | Todas aprobadas |
-| Dos empresas con encabezados y columnas distintos | 4 hojas | 5 páginas | Todas aprobadas |
-| Todas las columnas, muestra reducida | Cubierto por pruebas del exportador | 7 páginas | Todas aprobadas |
-| Una sola columna y encabezado largo | 2 hojas | 2 páginas | Todas aprobadas |
+- **Excel:** descarga real de dos hojas, nombres originales de Tiempo personal, columnas personalizadas y exclusión de solicitudes futuras y empleados excluidos.
+- **PDF:** descarga real de tres páginas mediante el motor nativo QWeb y wkhtmltopdf. Se renderizaron e inspeccionaron visualmente las tres páginas; nombres, periodos y horas quedaron legibles, con encabezados repetidos y sin texto superpuesto o cortado.
+- **Quiosco:** el enlace multiempresa original abrió su página y compiló sus recursos CSS/JS. La identificación por código de credencial devolvió el empleado y la selección de acciones; identificar y cancelar no creó un marcaje automático.
 
-**Se renderizaron e inspeccionaron las 18 páginas finales.** Se corrigió un título que quedaba aislado al pie de página colocándolo dentro del encabezado repetido de su tabla. Tras regenerar los archivos se confirmó que los títulos acompañan a las tablas y se repiten con las columnas en sus continuaciones. No quedaron textos superpuestos, columnas cortadas ni encabezados aislados en las cuatro muestras.
+Los nombres y el logotipo predeterminado de los documentos de comprobación pertenecen a una empresa sintética. No se incluyen esos reportes ni datos de prueba en el ZIP instalable.
 
-Las descargas comprobaron además:
+## Alcance y límites
 
-- Doce filas visibles en el Reporte de la muestra, conservando las horas reales, FALTA e incidencias.
-- Configuraciones distintas de las dos empresas, sin mezclar encabezados ni datos.
-- Solicitud PDF con IDs futuros o excluidos proporcionados directamente: esas fuentes no aparecen.
-- Los dos días futuros de incapacidad siguen aprobados en origen y permanecen ocultos en los archivos.
-- Los datos privados de la solicitud de ausencia no se exportan.
-- Los archivos Excel mantienen textos literales, fechas/duraciones numéricas y sus encabezados elegidos.
-- El intento de descargar el Excel sin autenticación fue rechazado.
-- Asistencias y solicitud aprobada de la muestra conservadas después de las operaciones de configuración y exportación.
+Se comprobó el backend de la proyección Gantt y sus permisos. **No se ejecutó la interfaz visual Enterprise `web_gantt`/`hr_attendance_gantt`**, porque sus módulos no están disponibles en este entorno. El código del puente Gantt conserva el de V4.2; solo cambian su versión declarada y documentación. Su prueba `tests/test_enterprise_gantt.py` permanece incluida para una base Enterprise con esas dependencias.
 
-El logotipo y nombres de empresa de los PDF de comprobación pertenecen a la muestra sintética. El módulo utiliza el diseño documental configurado para cada empresa en Odoo.
+La comprobación de escaneo cubre la identificación del código y los recursos del quiosco; no sustituye probar la cámara o el lector físico de la empresa. Tampoco equivale a haber instalado esta versión en la base del cliente o validado sus personalizaciones Studio. Esas comprobaciones se realizan primero en la rama de pruebas.
 
-## Alcance de Enterprise
+## Ejecutar la suite en una base de pruebas
 
-Las pruebas cubren el backend real y la proyección SQL del Gantt, incluidos sus permisos. **No se ejecutó la interfaz visual Enterprise `web_gantt`/`hr_attendance_gantt`**, porque esos módulos no están disponibles en el entorno de prueba. El código del puente se conserva respecto de V4.1.
-
-El complemento incluye `tests/test_enterprise_gantt.py` para ejecutarlo en una base Enterprise de Staging con sus dependencias reales. La prueba visual de ese tablero y de cualquier personalización Studio u otro complemento de la base del cliente corresponde a ese entorno.
-
-## Comandos de referencia
-
-Sobre una base de pruebas:
+En una base limpia de pruebas con el módulo instalado:
 
 ```bash
 odoo-bin -d BASE_DE_PRUEBAS -u coirtech_attendance_meal_control --test-enable --test-tags /coirtech_attendance_meal_control --stop-after-init
 ```
 
-En Enterprise, con el puente y sus dependencias instalados:
+Con el complemento multiempresa disponible e instalado:
+
+```bash
+odoo-bin -d BASE_DE_PRUEBAS -u coirtech_attendance_meal_control,attendance_multi_company_kiosk --test-enable --test-tags /coirtech_attendance_meal_control,/attendance_multi_company_kiosk --stop-after-init
+```
+
+Para el puente Enterprise, con sus dependencias reales instaladas:
 
 ```bash
 odoo-bin -d BASE_ENTERPRISE_DE_PRUEBAS -u coirtech_attendance_absence_gantt --test-enable --test-tags /coirtech_attendance_absence_gantt --stop-after-init
 ```
 
-Los archivos de prueba HTTP, credenciales sintéticas, bases de datos y dependencias del entorno no se incluyen en el ZIP instalable.
+Los documentos VALIDACION_V4_2.md, VALIDACION_V4.md, VALIDACION_V3.md y VALIDACION_V2.md se conservan como historial de las entregas anteriores.

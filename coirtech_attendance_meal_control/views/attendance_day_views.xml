@@ -70,7 +70,7 @@
                             <field name="worked_hours" widget="float_time" invisible="is_indicator or not check_out"/>
                         </group>
                     </group>
-                    <group string="Ausencia aprobada o revisión de Recursos Humanos" invisible="not is_indicator or is_absence">
+                    <group string="Ausencia o revisión de Recursos Humanos" invisible="not is_indicator or is_absence">
                         <field name="report_label"/>
                         <field name="leave_periods"/>
                         <field name="leave_hours" widget="float_time" invisible="not leave_hours"/>
@@ -126,7 +126,7 @@
                 <separator/>
                 <filter name="absences" string="Faltas" domain="[('is_absence', '=', True)]"/>
                 <filter name="attendances" string="Asistencias" domain="[('attendance_id', '!=', False)]"/>
-                <filter name="approved_leaves" string="Ausencias aprobadas" domain="[('indicator_state', 'in', ['approved', 'partial'])]"/>
+                <filter name="approved_leaves" string="Ausencias registradas" domain="[('indicator_state', 'in', ['approved', 'partial'])]"/>
                 <filter name="hr_review" string="Revisión de RH" domain="[('indicator_state', '=', 'review')]"/>
                 <separator/>
                 <filter name="meal_open" string="En comida" domain="[('coir_meal_status', '=', 'open')]"/>

@@ -17,14 +17,14 @@ class CoirAttendanceDay(models.Model):
     is_absence = fields.Boolean(string='Es falta', readonly=True)
     is_indicator = fields.Boolean(string='Es ausencia o incidencia', readonly=True)
     indicator_state = fields.Selection([
-        ('absent', 'FALTA'), ('approved', 'Ausencia aprobada'),
+        ('absent', 'FALTA'), ('approved', 'Ausencia registrada'),
         ('partial', 'Ausencia parcial'), ('review', 'Revisión de Recursos Humanos'),
     ], string='Tipo de registro', readonly=True)
     report_label = fields.Char(string='Ausencia / incidencia', readonly=True)
-    leave_label = fields.Char(string='Ausencia aprobada', readonly=True)
-    leave_periods = fields.Char(string='Periodo autorizado', readonly=True)
+    leave_label = fields.Char(string='Tipo de ausencia', readonly=True)
+    leave_periods = fields.Char(string='Periodo de ausencia', readonly=True)
     leave_hours = fields.Float(string='Horas autorizadas', readonly=True,
-                               help='Horas justificadas sobre el horario laboral; no son horas trabajadas.')
+                               help='Horas de solicitudes aprobadas sobre el horario laboral; no son horas trabajadas.')
     review_reason = fields.Char(string='Incidencia para RH', readonly=True)
     employee_id = fields.Many2one('hr.employee', string='Empleado', readonly=True)
     company_id = fields.Many2one('res.company', string='Empresa', readonly=True)

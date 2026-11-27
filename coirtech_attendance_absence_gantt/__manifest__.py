@@ -1,7 +1,7 @@
 {
     "name": "COIRTECH - Faltas en el Gantt original",
     "summary": "Indicadores FALTA rojos en el tablero nativo de Asistencias.",
-    "version": "19.0.4.2.0",
+    "version": "19.0.4.4.0",
     "category": "Human Resources/Attendances",
     "author": "COIRTECH",
     "license": "LGPL-3",
