@@ -198,13 +198,15 @@ class TestCoirV43Reports(TransactionCase):
                 self.assertNotIn('Study leave', notice.leave_periods)
         self._assert_report_output(self._wizard(), 'Permiso de estudios')
         self.assertEqual(leave.state, 'confirm')
-        # An empty company language has a deterministic original-name fallback,
-        # even if the caller is using Spanish for its own interface.
+        # An empty company contact language has a deterministic fallback.
+        # For companies in Mexico, V4.4 deliberately prefers the active
+        # es_MX type translation, avoiding a misleading English base label.
         self.company.partner_id.lang = False
         self.env['coir.attendance.absence'].with_context(lang='es_MX')._sync_approved_leaves(
             '2026-11-23', '2026-11-23', self.company.ids,
         )
-        self.assertEqual(notice.leave_label, 'Study leave')
+        report_lang = self.env['coir.attendance.absence']._coir_leave_type_report_language(self.company)
+        self.assertEqual(notice.leave_label, leave_type.with_context(lang=report_lang).name)
         self.assertEqual(leave.state, 'confirm')
 
     def test_refused_request_disappears_while_real_hours_remain(self):

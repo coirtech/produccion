@@ -378,22 +378,52 @@ class CoirAttendanceAbsence(models.Model):
         return bool(started and day >= pytz.UTC.localize(started).astimezone(pytz.timezone(timezone)).date())
 
     @api.model
+    def _coir_leave_type_report_language(self, company):
+        """Use the intended report locale, not an incidental English company contact locale.
+
+        In Mexican databases a Time Off type may have been created from a
+        template whose en_US text is e.g. 'Home Office' but is called
+        'Vacaciones' in the Spanish UI. The prior fallback to the company's
+        partner language could display the unrelated English text in a
+        Spanish attendance report. Only names are localized: source identity
+        always comes from hr.leave.holiday_status_id (record ID).
+
+        Preserve an explicitly configured Spanish company language. For a
+        company registered in Mexico, prefer an active Mexican Spanish
+        language, falling back to another active Spanish locale when needed.
+        Non-Mexican companies retain the prior company-locale behaviour.
+        """
+        company.ensure_one()
+        configured = company.partner_id.lang or "en_US"
+        if configured.startswith("es") or company.country_id.code != "MX":
+            return configured
+        candidates = ("es_MX", "es_419", "es_ES")
+        active = set(self.env["res.lang"].sudo().search([
+            ("code", "in", list(candidates)), ("active", "=", True),
+        ]).mapped("code"))
+        return next((code for code in candidates if code in active), configured)
+
+    @api.model
     def _leave_day_values(self, employee, leaves, work, known_schedule, day, timezone, now, attendances, can_review):
         start, stop = _day_bounds(day, timezone)
         bounds = [(_utc_naive(start), _utc_naive(stop))]
         labels, periods, covered_by_leave, approved_coverage = [], [], [], []
         zone = pytz.timezone(timezone)
-        # These labels are stored and shared by all report readers. Resolve
-        # native translations in the employee company's language so a cron or
-        # another user's interface cannot alternate their language on refresh.
-        report_lang = employee.company_id.partner_id.lang or "en_US"
+        # The source Time Off type is identified by holiday_status_id, never
+        # by name or case. Use one deterministic report language so scheduled
+        # jobs and users with different UI languages cannot overwrite labels.
+        # Mexican companies with an English default contact language must not
+        # expose a different English translation (e.g. 'Home Office') instead
+        # of the Spanish type shown in Time Off (e.g. 'Vacaciones').
+        report_lang = self._coir_leave_type_report_language(employee.company_id)
         applicable = self.env["hr.leave"].sudo()
         for leave in leaves:
             coverage = _intersect([(leave.date_from, leave.date_to)], work if known_schedule else bounds)
             if not coverage:
                 continue
             applicable |= leave
-            label = leave.holiday_status_id.with_context(lang=report_lang).name
+            leave_type = leave.holiday_status_id
+            label = leave_type.with_context(lang=report_lang).name or leave_type.with_context(lang=False).name
             if label not in labels:
                 labels.append(label)
             for begin, end in coverage:

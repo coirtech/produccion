@@ -1,8 +1,16 @@
-# COIRTECH Asistencias V4.3
+# COIRTECH Asistencias V4.4
 
-**Odoo 19 · Versión 19.0.4.3.0 · Nombre técnico: `coirtech_attendance_meal_control`**
+**Odoo 19 · Versión 19.0.4.4.0 · Nombre técnico: `coirtech_attendance_meal_control`**
 
 Esta actualización muestra las solicitudes de Tiempo personal con el nombre de su tipo original, aunque todavía no tengan aprobación final. Corrige además el error de acceso a `coir_meal_section_id` al consultar empleados desde Manufactura u otras aplicaciones con un usuario sin acceso privado a Recursos Humanos.
+
+## Corrección V4.4 — Vacaciones mostrado erróneamente como Home Office
+
+- El nombre mostrado se extrae siempre del `holiday_status_id` de la solicitud original (`hr.leave`) del empleado, sin buscar tipos por nombre ni ignorar mayúsculas/minúsculas. `Vacaciones` y `vacaciones` se mantienen como tipos separados.
+- Cuando la empresa pertenece a México, el reporte usa la traducción activa `es_MX` (o `es_419`/`es_ES` si no está disponible), incluso si el contacto de la empresa conserva `en_US`. Esto evita mostrar un texto traducido al inglés, como `Home Office`, cuando el tipo se ve como `Vacaciones` en Tiempo personal. Para empresas fuera de México se conserva el idioma de la empresa.
+- Al actualizar, una migración vuelve a sincronizar los indicadores previamente guardados desde las solicitudes originales; no cambia solicitudes, estados de aprobación, asistencias ni periodos reales.
+- La columna Ausencia/Incidencia, la vista de reporte y Excel/PDF comparten el valor corregido. Se conservan solicitudes pendientes sin texto «Pendiente de aprobación» y las futuras ocultas.
+- Si al actualizar no cambia el texto, revisa en la ficha de la **empresa** el campo País (México), el idioma instalado y las traducciones del tipo de Tiempo personal; no elimines ni renombres solicitudes.
 
 ## 1. Cambios de esta versión
 
@@ -129,12 +137,12 @@ El ZIP contiene dos carpetas de módulos, una junto a otra:
 - **coirtech_attendance_meal_control**: módulo principal.
 - **coirtech_attendance_absence_gantt**: complemento para el Gantt nativo Enterprise.
 
-1. Descomprime **coirtech_asistencias_odoo19_v4_3.zip**.
+1. Descomprime **coirtech_asistencias_odoo19_v4_4.zip**.
 2. En tu rama de pruebas —por ejemplo **odometro**— reemplaza los archivos dentro de esas mismas carpetas. No cambies los nombres técnicos ni agregues un sufijo de versión a la carpeta.
 3. Confirma los cambios en GitHub y espera la compilación de Odoo.sh.
 4. Abre la base de esa rama. En Aplicaciones, con modo desarrollador, actualiza la lista si hace falta y quita el filtro Aplicaciones para encontrar los complementos.
-5. Busca **COIRTECH - Asistencias, comidas y salidas** y pulsa **Actualizar**. La versión es **19.0.4.3.0**.
-6. Si **COIRTECH - Faltas en el Gantt original** ya está instalado, actualízalo también. Su código de funcionamiento se conserva; el manifiesto identifica esta entrega como **19.0.4.3.0**.
+5. Busca **COIRTECH - Asistencias, comidas y salidas** y pulsa **Actualizar**. La versión es **19.0.4.4.0**.
+6. Si **COIRTECH - Faltas en el Gantt original** ya está instalado, actualízalo también. Su código de funcionamiento se conserva; el manifiesto identifica esta entrega como **19.0.4.4.0**.
 7. Recarga Odoo y genera reportes nuevos para revisar los cambios.
 
 **No desinstales los módulos para actualizarlos.** No subas solo el ZIP ni dejes una carpeta con la versión conteniendo otra carpeta igual. El complemento multiempresa existente permanece en su propia carpeta.

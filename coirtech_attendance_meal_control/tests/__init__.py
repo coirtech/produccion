@@ -16,3 +16,4 @@ from . import test_v4_2_reports
 from . import test_v4_3_absences
 from . import test_v4_3_employee_permissions
 from . import test_v4_3_reports
+from . import test_v4_4_leave_labels
