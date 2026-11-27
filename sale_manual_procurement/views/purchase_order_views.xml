@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="purchase_order_form_optional_partner" model="ir.ui.view">
+        <field name="name">purchase.order.form.optional.partner</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="required">state not in ('draft', 'sent', 'cancel')</attribute>
+                <attribute name="placeholder">Selecciona el proveedor para esta cotización...</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

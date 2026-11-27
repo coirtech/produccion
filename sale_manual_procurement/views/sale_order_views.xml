@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_manual_procurement_buttons" model="ir.ui.view">
+        <field name="name">sale.order.form.manual.procurement.buttons</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button"
+                        type="object"
+                        name="action_view_all_linked_purchases"
+                        icon="fa-credit-card"
+                        invisible="all_purchase_count == 0">
+                    <field string="Compras" name="all_purchase_count" widget="statinfo"/>
+                </button>
+
+                <button class="oe_stat_button"
+                        type="object"
+                        name="action_view_all_linked_mos"
+                        icon="fa-wrench"
+                        invisible="all_mrp_count == 0">
+                    <field string="Fabricación" name="all_mrp_count" widget="statinfo"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>
